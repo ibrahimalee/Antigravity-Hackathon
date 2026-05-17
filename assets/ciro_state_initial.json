@@ -1,0 +1,135 @@
+{
+  "simulation_time": "10:46",
+  "scenario": "initial",
+  "formula_version": "v2_fixed",
+  "agent_traces": {
+    "agent1_signal_fusion": {
+      "steps": [
+        "REF_TIME=10:45. Freshness: S1(10:42,3min)=1.0 | S2(10:43,2min)=1.0 | S3(10:44,1min)=1.0 | S4(10:45,0min)=1.0 | S5(10:46,<5min)=1.0",
+        "KEYWORD DETECT: S1 'pani bhar gaya'->urban_flood(7) | S2 'flooding'->urban_flood(7) | S3 'sarak band'+pani; highest sev wins->urban_flood(7) | S4 weather corroboration | S5 traffic corroboration",
+        "MENTION VELOCITY [G-10/urban_flood social]: S1,S2,S3 all in 2-min window. count=3, boost=min(0.30,(3-1)x0.10)=0.20",
+        "FORMULA v2 [social]: credibility=(base+boost)x freshness. S1:(0.35+0.20)x1.0=0.55 | S2:0.55 | S3:0.55",
+        "FORMULA v2 [non-social]: credibility=base x freshness. S4:0.90x1.0=0.90 | S5:0.80x1.0=0.80",
+        "GROUP [G-10/urban_flood]: signals=[1,2,3,4,5]. fused_mean=(0.55+0.55+0.55+0.90+0.80)/5=0.67",
+        "CORROBORATION: types=[anonymous_social,weather_api,traffic_api]=3>=3 -> TRUE. 0.67x1.35=0.9045 < 0.95 -> credibility=0.90"
+      ],
+      "fused_signals": [
+        {
+          "location": "G-10",
+          "event_type": "urban_flood",
+          "credibility_score": 0.90,
+          "source_count": 5,
+          "mention_velocity": 3,
+          "source_types": ["anonymous_social", "weather_api", "traffic_api"],
+          "corroborated": true
+        }
+      ]
+    },
+    "agent2_crisis_detection": {
+      "steps": [
+        "THRESHOLD: G-10/urban_flood credibility=0.90 >= 0.60 -> CRISIS -> ISB-001",
+        "SEVERITY: base=7 | density_bonus(G-10)=+1 | penalty(0.90>=0.70)=0 | severity=8",
+        "RADIUS: urban_flood=2.5km",
+        "CASCADE: urban_flood ruleset applied",
+        "CONFIDENCE=0.90"
+      ],
+      "crises": [
+        {
+          "id": "ISB-001",
+          "type": "urban_flood",
+          "location": "G-10",
+          "severity": 8,
+          "confidence": 0.90,
+          "affected_radius_km": 2.5,
+          "cascade_effects": [
+            "Traffic displacement to adjacent sectors",
+            "Hospital ER demand +15%",
+            "Electrical hazard risk in flooded zones"
+          ],
+          "status": "ACTIVE"
+        }
+      ]
+    },
+    "agent3_resource_allocation": {
+      "steps": [
+        "PRIORITY: ISB-001 pop_density(G-10)=8, dist=0km, resp_time=0min. score=8x8/(1+0)=64.0",
+        "SORT: [ISB-001:64.0] — single crisis, no reorder",
+        "ALLOCATE ISB-001: ambulances=2, rescue_teams=2, police_units=3, medical_vans=1",
+        "POOL REMAINING: ambulances=2, rescue_teams=1, police_units=2, medical_vans=1",
+        "TRADE-OFFS: none (single active crisis)"
+      ],
+      "allocations": [
+        {
+          "crisis_id": "ISB-001",
+          "priority_score": 64.0,
+          "resources_assigned": {
+            "ambulances": 2,
+            "rescue_teams": 2,
+            "police_units": 3,
+            "medical_vans": 1
+          },
+          "actions": [
+            {
+              "description": "Dispatch 2 ambulances to G-10 flood zone via Kashmir Highway",
+              "state_change": "Two ambulance icons animate from base toward G-10/2; route line renders red on map"
+            },
+            {
+              "description": "Deploy 2 rescue teams to G-10/2 for water rescue and evacuation",
+              "state_change": "Rescue team markers appear at G-10/2; orange pulse expands to 2.5km radius"
+            },
+            {
+              "description": "Deploy 3 police units to Srinagar Highway / G-10 interchange for diversion",
+              "state_change": "Police icons at G-10 interchange; Srinagar Highway turns red; IJP Road highlighted green"
+            },
+            {
+              "description": "Send targeted public alert to all residents within 2.5km of G-10 centroid",
+              "state_change": "Alert pulse radiates from G-10; 2.5km zone shaded amber; notification badge increments"
+            },
+            {
+              "description": "Notify PIMS Hospital to prepare 8 trauma beds; ETA 5 min",
+              "state_change": "PIMS icon flashes yellow; ER widget shows 'Trauma Alert — 8 beds reserved'"
+            },
+            {
+              "description": "Dispatch 1 medical van to G-10 entry for field triage",
+              "state_change": "Medical van icon moves depot->G-10 boundary; 'Field Triage Active' flag appears"
+            }
+          ],
+          "stakeholder_messages": {
+            "public_english": "Emergency alert: Severe urban_flood in G-10. Avoid Srinagar Highway. Use IJP Road as alternate. Stay safe.",
+            "public_urdu": "ہنگامی الرٹ: G-10 میں شدید شہری سیلاب۔ سری نگر ہائی وے سے پرہیز کریں۔ متبادل راستہ آئی جے پی روڈ استعمال کریں۔",
+            "pims_hospital": "Mass casualty alert: urban_flood G-10. Prepare 8 trauma beds. ETA of first ambulance: 5 min.",
+            "traffic_authority": "Incident Command: Block Srinagar Highway at G-10 Interchange. Redirect to IJP Road immediately.",
+            "iesco_utility": "Safety alert: urban_flood in G-10. Risk of electrical hazard. Dispatch crew to assess G-10 sector.",
+            "media_command": "Incident ID #ISB-001. Type: urban_flood. Severity: 8/10. Confidence: 0.90. Resources deployed: 2 ambulances, 2 rescue_teams, 3 police_units, 1 medical_van."
+          }
+        }
+      ]
+    }
+  },
+  "final_state": {
+    "active_crises": [
+      {
+        "id": "ISB-001",
+        "type": "urban_flood",
+        "location": "G-10",
+        "severity": 8,
+        "confidence": 0.90,
+        "affected_radius_km": 2.5,
+        "status": "ACTIVE"
+      }
+    ],
+    "monitoring_events": [],
+    "allocations": [
+      { "crisis_id": "ISB-001", "ambulances": 2, "rescue_teams": 2, "police_units": 3, "medical_vans": 1 }
+    ],
+    "resource_pool_remaining": { "ambulances": 2, "rescue_teams": 1, "police_units": 2, "medical_vans": 1 },
+    "pending_alerts": [
+      "Public SMS alert dispatched — G-10 2.5km radius",
+      "PIMS Hospital ER trauma alert sent",
+      "Traffic diversion order — Srinagar Highway",
+      "IESCO electrical hazard crew dispatched",
+      "Media bulletin published — ISB-001"
+    ],
+    "degraded_mode": false
+  }
+}

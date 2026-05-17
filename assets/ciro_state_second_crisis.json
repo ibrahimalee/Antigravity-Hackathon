@@ -1,0 +1,121 @@
+{
+  "simulation_time": "10:52",
+  "scenario": "second_crisis",
+  "formula_version": "v2_fixed",
+  "injected_signals": [6, 7],
+  "agent_traces": {
+    "agent1_signal_fusion": {
+      "steps": [
+        "REF_TIME=10:52. S1(10min)=0.9 | S2(9min)=0.9 | S3(8min)=0.9 | S4(7min)=0.9 | S5(6min)=0.9 | S6(2min)=1.0 | S7(0min)=1.0",
+        "S6 'accident,palat'->road_accident(6). S7 traffic corroboration Murree Road.",
+        "G-10 social boost: count=3, boost=0.20. Murree Road social: count=1, boost=0.00",
+        "G-10 creds: S1=(0.35+0.20)x0.9=0.495 | S2=0.495 | S3=0.495 | S4=0.81 | S5=0.72. mean=0.603. corroborated(3 types)->x1.35=0.814->0.81",
+        "Murree Road creds: S6=(0.35+0.00)x1.0=0.35 | S7=0.80. mean=0.575. types=2 NOT corroborated. credibility=0.575",
+        "NOTE: 0.575 < 0.60 crisis threshold. Formula v2 correctly rejects 1 anon post+traffic as insufficient. Status=MONITORING."
+      ],
+      "fused_signals": [
+        {
+          "location": "G-10",
+          "event_type": "urban_flood",
+          "credibility_score": 0.81,
+          "source_count": 5,
+          "mention_velocity": 3,
+          "source_types": ["anonymous_social", "weather_api", "traffic_api"],
+          "corroborated": true
+        },
+        {
+          "location": "Murree Road",
+          "event_type": "road_accident",
+          "credibility_score": 0.575,
+          "source_count": 2,
+          "mention_velocity": 1,
+          "source_types": ["anonymous_social", "traffic_api"],
+          "corroborated": false
+        }
+      ]
+    },
+    "agent2_crisis_detection": {
+      "steps": [
+        "ISB-001 G-10/urban_flood: 0.81>=0.60 -> CRISIS. sev=7+1+0=8.",
+        "ISB-002 Murree Road/road_accident: 0.575<0.60 -> MONITORING. No allocation until threshold crossed.",
+        "ISB-002 note: one additional field_report or social post would push above 0.60."
+      ],
+      "crises": [
+        {
+          "id": "ISB-001",
+          "type": "urban_flood",
+          "location": "G-10",
+          "severity": 8,
+          "confidence": 0.81,
+          "affected_radius_km": 2.5,
+          "cascade_effects": [
+            "Traffic displacement to adjacent sectors",
+            "Hospital ER demand +15%",
+            "Electrical hazard risk in flooded zones"
+          ],
+          "status": "ACTIVE"
+        },
+        {
+          "id": "ISB-002",
+          "type": "road_accident",
+          "location": "Murree Road",
+          "severity": null,
+          "confidence": 0.575,
+          "affected_radius_km": null,
+          "cascade_effects": [],
+          "status": "MONITORING",
+          "escalation_note": "Needs 1 more corroborating source to cross 0.60 crisis threshold"
+        }
+      ]
+    },
+    "agent3_resource_allocation": {
+      "steps": [
+        "ELIGIBLE: ISB-001 only. score=8x8/(1+0)=64.0",
+        "ALLOCATE ISB-001: ambulances=2, rescue_teams=2, police_units=3, medical_vans=1",
+        "RESERVE 1 ambulance on standby for ISB-002 escalation.",
+        "POOL REMAINING: ambulances=2, rescue_teams=1, police_units=2, medical_vans=1"
+      ],
+      "allocations": [
+        {
+          "crisis_id": "ISB-001",
+          "priority_score": 64.0,
+          "resources_assigned": { "ambulances": 2, "rescue_teams": 2, "police_units": 3, "medical_vans": 1 },
+          "actions": [
+            { "description": "Maintain 2 ambulances on scene at G-10/2", "state_change": "Ambulance icons remain active at G-10/2 with status ON SCENE" },
+            { "description": "Continue rescue operations at G-10/2", "state_change": "Rescue team markers pulse active; evacuation progress bar on dashboard" },
+            { "description": "Place Murree Road on monitoring dashboard", "state_change": "Yellow MONITORING badge at Murree Road junction; no resource icons deployed" },
+            { "description": "Pre-position 1 standby ambulance at G-10 base for rapid Murree Road deployment", "state_change": "One ambulance shown STANDBY at base with arrow toward Murree Road" },
+            { "description": "Issue caution advisory for Murree Road to traffic authority", "state_change": "Murree Road segment highlighted yellow on traffic overlay" }
+          ],
+          "stakeholder_messages": {
+            "public_english": "Emergency alert: Severe urban_flood in G-10. Avoid Srinagar Highway. Use IJP Road as alternate. Stay safe.",
+            "public_urdu": "ہنگامی الرٹ: G-10 میں شدید شہری سیلاب۔ سری نگر ہائی وے سے پرہیز کریں۔ متبادل راستہ آئی جے پی روڈ استعمال کریں۔",
+            "pims_hospital": "Mass casualty alert: urban_flood G-10. Prepare 8 trauma beds. ETA of first ambulance: 5 min.",
+            "traffic_authority": "G-10 Srinagar Highway blocked. Murree Road: unconfirmed accident near Rawalpindi — monitor junction.",
+            "iesco_utility": "Safety alert: urban_flood in G-10. Risk of electrical hazard. Dispatch crew to assess G-10 sector.",
+            "media_command": "Incident ID #ISB-001. Type: urban_flood. Severity: 8/10. Confidence: 0.81. Resources: 2 ambulances, 2 rescue_teams, 3 police_units, 1 medical_van. Watch: Murree Road (unconfirmed)."
+          }
+        }
+      ]
+    }
+  },
+  "final_state": {
+    "active_crises": [
+      { "id": "ISB-001", "type": "urban_flood", "location": "G-10", "severity": 8, "confidence": 0.81, "affected_radius_km": 2.5, "status": "ACTIVE" }
+    ],
+    "monitoring_events": [
+      { "id": "ISB-002", "type": "road_accident", "location": "Murree Road", "confidence": 0.575, "status": "MONITORING", "escalation_threshold": 0.60 }
+    ],
+    "allocations": [
+      { "crisis_id": "ISB-001", "ambulances": 2, "rescue_teams": 2, "police_units": 3, "medical_vans": 1 }
+    ],
+    "resource_pool_remaining": { "ambulances": 2, "rescue_teams": 1, "police_units": 2, "medical_vans": 1 },
+    "pending_alerts": [
+      "ISB-001 SMS active — G-10 2.5km radius",
+      "PIMS Hospital ER on standby",
+      "Srinagar Highway diversion active",
+      "Murree Road caution advisory issued"
+    ],
+    "degraded_mode": false
+  }
+}

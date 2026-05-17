@@ -1,0 +1,70 @@
+{
+  "simulation_time": "11:05",
+  "scenario": "baseline",
+  "formula_version": "non_agentic_keyword_match",
+  "agent_traces": {
+    "agent1_signal_fusion": {
+      "steps": ["Rule-based keyword match 'pani' found in 3 posts", "Alerting for all matches", "No credibility calculation performed"],
+      "fused_signals": [
+        {
+          "location": "G-10",
+          "event_type": "flood_alert",
+          "credibility_score": 1.0,
+          "source_count": 3,
+          "mention_velocity": 0,
+          "source_types": ["social_media"],
+          "corroborated": false
+        }
+      ]
+    },
+    "agent2_crisis_detection": {
+      "steps": ["Keyword match confirmed", "Severity set to maximum for safety"],
+      "crises": [
+        {
+          "id": "ALERT-999",
+          "type": "urban_flood",
+          "location": "G-10",
+          "severity": 10.0,
+          "confidence": 1.0,
+          "affected_radius_km": 10.0,
+          "cascade_effects": ["City-wide panic", "Traffic gridlock"],
+          "status": "ACTIVE"
+        }
+      ]
+    },
+    "agent3_resource_allocation": {
+      "steps": ["Manual dispatch required", "Resource exhaustion imminent"],
+      "allocations": [
+        {
+          "crisis_id": "ALERT-999",
+          "priority_score": 100.0,
+          "resources_assigned": { "ambulances": 4, "rescue_teams": 3, "police_units": 5, "medical_vans": 2 },
+          "actions": [
+            { "description": "Send SMS to all 300,000 residents", "state_change": "Map covered in warning icons" },
+            { "description": "Block all roads in North Islamabad", "state_change": "Entire road network turns red" }
+          ],
+          "stakeholder_messages": {
+            "public_english": "EVACUATE NOW: WATER DETECTED IN G-10",
+            "public_urdu": "فوری انخلاء: G-10 میں پانی دیکھا گیا ہے",
+            "pims_hospital": "EXPECT MASS CASUALTIES",
+            "traffic_authority": "CLOSE ALL ROADS",
+            "iesco_utility": "CUT ALL POWER",
+            "media_command": "CITY WIDE EMERGENCY"
+          }
+        }
+      ]
+    }
+  },
+  "final_state": {
+    "active_crises": [
+      { "id": "ALERT-999", "type": "urban_flood", "location": "G-10", "severity": 10.0, "confidence": 1.0, "affected_radius_km": 10.0, "status": "ACTIVE" }
+    ],
+    "monitoring_events": [],
+    "allocations": [
+      { "crisis_id": "ALERT-999", "ambulances": 4, "rescue_teams": 3, "police_units": 5, "medical_vans": 2 }
+    ],
+    "resource_pool_remaining": { "ambulances": 0, "rescue_teams": 0, "police_units": 0, "medical_vans": 0 },
+    "pending_alerts": ["CITY-WIDE SMS SENT", "ALL ROADS CLOSED"],
+    "degraded_mode": false
+  }
+}

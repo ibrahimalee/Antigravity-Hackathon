@@ -1,0 +1,129 @@
+{
+  "simulation_time": "10:58",
+  "scenario": "field_report",
+  "formula_version": "v2_fixed",
+  "injected_signals": [8],
+  "agent_traces": {
+    "agent1_signal_fusion": {
+      "steps": [
+        "REF_TIME=10:58. S1(10:42,16min)=0.7 | S2(10:43,15min)=0.9 | S3(10:44,14min)=0.9 | S4(10:45,13min)=0.9 | S5(10:46,12min)=0.9 | S6(10:50,8min)=0.9 | S7(10:52,6min)=0.9 | S8(10:58,0min)=1.0",
+        "S8 KEYWORD DETECT: 'burst water main','not surface flooding','No rescue needed' -> no standard keyword match. Field report reclassifies G-10 event to infrastructure_failure (water_main_burst).",
+        "G-10/urban_flood stale creds: S1=(0.35+0.20)x0.7=0.385 | S2=0.495 | S3=0.495 | S4=0.81 | S5=0.72. mean=0.581. corroborated->x1.35=0.785->0.78",
+        "G-10/infrastructure_failure (new): S8=0.85x1.0=0.85. source_types=[field_report]=1. NOT corroborated. credibility=0.85",
+        "OVERRIDE RULE: field_report (credibility=0.85) with explicit contradiction of urban_flood classification overrides fused social+weather+traffic signals (credibility=0.78). G-10 event reclassified. urban_flood group DISSOLVED.",
+        "Murree Road/road_accident unchanged: credibility=0.575 (MONITORING)."
+      ],
+      "fused_signals": [
+        {
+          "location": "G-10",
+          "event_type": "infrastructure_failure",
+          "credibility_score": 0.85,
+          "source_count": 1,
+          "mention_velocity": 0,
+          "source_types": ["field_report"],
+          "corroborated": false,
+          "override_note": "field_report explicitly contradicts urban_flood. Original social+weather+traffic signals misidentified burst water main as surface flooding."
+        },
+        {
+          "location": "Murree Road",
+          "event_type": "road_accident",
+          "credibility_score": 0.575,
+          "source_count": 2,
+          "mention_velocity": 1,
+          "source_types": ["anonymous_social", "traffic_api"],
+          "corroborated": false
+        }
+      ]
+    },
+    "agent2_crisis_detection": {
+      "steps": [
+        "ISB-001 RETRACTED: G-10/urban_flood classification dissolved by field report override.",
+        "G-10/infrastructure_failure: credibility=0.85>=0.60 -> CRISIS (reclassified). Severity: base=4 (infrastructure analog), bonus(G-10)=+1, penalty(0.85>=0.70)=0, severity=5. Radius=1.5km (power_outage analog). field_report says No rescue needed.",
+        "ISB-001 reclassified as water_main_burst at severity 5 (down from urban_flood severity 8).",
+        "ISB-002 Murree Road: still MONITORING at 0.575.",
+        "CASCADE for infrastructure_failure: ['Water supply disruption to G-10 residents','Road surface damage risk at G-10/2','IESCO crew required to verify electrical safety']"
+      ],
+      "crises": [
+        {
+          "id": "ISB-001",
+          "type": "infrastructure_failure",
+          "subtype": "water_main_burst",
+          "location": "G-10",
+          "severity": 5,
+          "confidence": 0.85,
+          "affected_radius_km": 1.5,
+          "cascade_effects": [
+            "Water supply disruption to G-10 residents",
+            "Road surface damage risk at G-10/2",
+            "IESCO crew required to verify electrical safety"
+          ],
+          "status": "ACTIVE",
+          "reclassified_from": "urban_flood",
+          "reclassification_reason": "field_report S8: burst water main confirmed, no surface flooding, no rescue needed"
+        },
+        {
+          "id": "ISB-002",
+          "type": "road_accident",
+          "location": "Murree Road",
+          "severity": null,
+          "confidence": 0.575,
+          "affected_radius_km": null,
+          "cascade_effects": [],
+          "status": "MONITORING"
+        }
+      ]
+    },
+    "agent3_resource_allocation": {
+      "steps": [
+        "ISB-001 RECLASSIFIED: severity dropped 8->5. urban_flood resource allocation retracted.",
+        "WITHDRAW: 2 rescue_teams recalled (field report: no rescue needed). 1 ambulance stood down.",
+        "RETAIN: 1 ambulance on standby. 2 police units for road management at G-10/2 burst site.",
+        "DISPATCH: IESCO utility crew to G-10/2 (handled via stakeholder message, not resource pool).",
+        "POOL AFTER RETRACTION: ambulances=3, rescue_teams=3, police_units=3, medical_vans=2",
+        "RETRACTION MESSAGE generated for all stakeholders.",
+        "TRADE-OFF LOG: Resources freed from ISB-001 flood response (priority 64.0->25.0 post-reclassify). Held in reserve pending ISB-002 escalation."
+      ],
+      "allocations": [
+        {
+          "crisis_id": "ISB-001",
+          "priority_score": 25.0,
+          "resources_assigned": { "ambulances": 1, "rescue_teams": 0, "police_units": 2, "medical_vans": 0 },
+          "actions": [
+            { "description": "Recall 2 rescue teams from G-10/2 — burst pipe confirmed, no flood rescue needed", "state_change": "Rescue team icons animate back to base; orange pulse overlay removed; green 'Resolved' tag on G-10" },
+            { "description": "Stand down 1 ambulance — field report confirms no casualties", "state_change": "One ambulance icon returns to base; crisis marker downgrades from red to orange" },
+            { "description": "Retain 2 police units at G-10/2 for road surface hazard management", "state_change": "Police icons remain at G-10/2; label changes to 'Road Hazard Control'" },
+            { "description": "Dispatch IESCO utility crew to G-10/2 to isolate water main and assess electrical safety", "state_change": "Utility crew icon appears at G-10/2; sector overlay changes to 'Infrastructure Response'" },
+            { "description": "Issue flood alert retraction to G-10 residents", "state_change": "Amber alert zone clears; green 'All Clear — No Flood' notification dispatched to 2.5km radius" }
+          ],
+          "stakeholder_messages": {
+            "public_english": "UPDATE: The G-10 flooding report has been corrected. On-site inspection confirms a burst water main at G-10/2, NOT surface flooding. No evacuation required. IESCO and utility crews are on site.",
+            "public_urdu": "اپ ڈیٹ: G-10 سیلاب کی اطلاع غلط تھی۔ G-10/2 میں پانی کا پائپ پھٹا ہے، نہ کہ سیلاب۔ انخلاء ضروری نہیں۔ متعلقہ ٹیمیں موجود ہیں۔",
+            "pims_hospital": "RETRACTION: G-10 urban_flood alert cancelled. Burst water main confirmed — no mass casualties expected. Stand down trauma beds. Monitor for minor injuries only.",
+            "traffic_authority": "UPDATE: G-10/2 road closure due to burst water main (NOT flood). Maintain road block at G-10/2 junction. Srinagar Highway diversion remains active until pipe repair complete.",
+            "iesco_utility": "URGENT: Burst water main at G-10/2 confirmed by field report. Dispatch crew immediately to assess electrical safety in affected zone. Water supply isolation required.",
+            "media_command": "CORRECTION — Incident ID #ISB-001. Reclassified: urban_flood -> infrastructure_failure (water_main_burst). Severity: 5/10. Confidence: 0.85. Rescue teams stood down. IESCO response active. No casualties."
+          }
+        }
+      ]
+    }
+  },
+  "final_state": {
+    "active_crises": [
+      { "id": "ISB-001", "type": "infrastructure_failure", "subtype": "water_main_burst", "location": "G-10", "severity": 5, "confidence": 0.85, "affected_radius_km": 1.5, "status": "ACTIVE", "reclassified_from": "urban_flood" }
+    ],
+    "monitoring_events": [
+      { "id": "ISB-002", "type": "road_accident", "location": "Murree Road", "confidence": 0.575, "status": "MONITORING" }
+    ],
+    "allocations": [
+      { "crisis_id": "ISB-001", "ambulances": 1, "rescue_teams": 0, "police_units": 2, "medical_vans": 0 }
+    ],
+    "resource_pool_remaining": { "ambulances": 3, "rescue_teams": 3, "police_units": 3, "medical_vans": 2 },
+    "retracted_alerts": ["G-10 urban_flood SMS — RETRACTED", "PIMS Hospital flood trauma alert — CANCELLED"],
+    "pending_alerts": [
+      "G-10 burst water main public correction notice sent",
+      "IESCO utility crew dispatched to G-10/2",
+      "Srinagar Highway partial closure maintained for pipe repair"
+    ],
+    "degraded_mode": false
+  }
+}

@@ -1,0 +1,15 @@
+// Copy this file to api_keys.dart and fill in your keys
+class ApiKeys {
+  static const String fallbackKey = 'YOUR_FALLBACK_TESTING_KEY';
+  static const List<String> keys = [
+    'GROQ_KEY_1',
+    'GROQ_KEY_2',
+    'GROQ_KEY_3',
+    'GROQ_KEY_4',
+    'GROQ_KEY_5',
+    'GROQ_KEY_6',
+    'GROQ_KEY_7',
+    'GROQ_KEY_8',
+    'GROQ_KEY_9',
+  ];
+}
