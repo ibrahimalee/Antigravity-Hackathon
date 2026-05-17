@@ -140,7 +140,7 @@ class CrisisMapScreen extends ConsumerStatefulWidget {
 }
 
 class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
-  late GoogleMapController _mapController;
+  GoogleMapController? _mapController;
   late FlutterLocalNotificationsPlugin _notificationsPlugin;
   
   final Set<Circle> _circles = {};
@@ -213,6 +213,19 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
     return LatLng(
       _islamabadCenter.latitude + (hash / 5000.0) - 0.01,
       _islamabadCenter.longitude + (hash / 5000.0) - 0.01,
+    );
+  }
+
+  void _animateToLocation(String location) {
+    if (_mapController == null) return;
+    final coords = _getCoords(location);
+    _mapController!.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: coords,
+          zoom: 14.5,
+        ),
+      ),
     );
   }
 
@@ -341,13 +354,24 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
     final appState = ref.watch(crisisProvider);
     final isRunning = appState.phase != SimulationPhase.idle && appState.phase != SimulationPhase.finished;
     
-    // Reactive updates for map layers & notifications
     ref.listen<CrisisAppState>(crisisProvider, (previous, next) {
       if (next.currentState != null) {
         _updateMapLayers(next);
         
         final currentCrises = next.currentState!.finalState.activeCrises;
         final previousCrises = previous?.currentState?.finalState.activeCrises ?? [];
+        
+        if (currentCrises.isNotEmpty) {
+          final newCrisis = currentCrises.firstWhere(
+            (c) => !previousCrises.any((pc) => pc.id == c.id),
+            orElse: () => currentCrises.last,
+          );
+          
+          if (previousCrises.isEmpty || currentCrises.length > previousCrises.length) {
+            _animateToLocation(newCrisis.location);
+          }
+        }
+
         if (currentCrises.length > previousCrises.length) {
           final newCrisis = currentCrises.firstWhere(
             (c) => !previousCrises.any((pc) => pc.id == c.id),
@@ -463,6 +487,7 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
           _BottomCommandPanel(
             selectedTab: _selectedTab,
             onTabChanged: (index) => setState(() => _selectedTab = index),
+            onTapCrisis: _animateToLocation,
           ),
         ],
       ),
@@ -679,10 +704,12 @@ class _ErrorOverlay extends StatelessWidget {
 class _BottomCommandPanel extends ConsumerWidget {
   final int selectedTab;
   final ValueChanged<int> onTabChanged;
+  final ValueChanged<String> onTapCrisis;
 
   const _BottomCommandPanel({
     required this.selectedTab,
     required this.onTabChanged,
+    required this.onTapCrisis,
   });
 
   @override
@@ -781,9 +808,9 @@ class _BottomCommandPanel extends ConsumerWidget {
   Widget _buildTabContent(CrisisAppState appState, ScrollController controller) {
     switch (selectedTab) {
       case 0:
-        return _SignalsPanelTab(appState: appState, controller: controller);
+        return _SignalsPanelTab(appState: appState, controller: controller, onTapLocation: onTapCrisis);
       case 1:
-        return _CrisesPanelTab(appState: appState, controller: controller);
+        return _CrisesPanelTab(appState: appState, controller: controller, onTapLocation: onTapCrisis);
       case 2:
         return _ActionsPanelTab(appState: appState, controller: controller);
       case 3:
@@ -798,8 +825,13 @@ class _BottomCommandPanel extends ConsumerWidget {
 class _SignalsPanelTab extends StatelessWidget {
   final CrisisAppState appState;
   final ScrollController controller;
+  final ValueChanged<String> onTapLocation;
 
-  const _SignalsPanelTab({required this.appState, required this.controller});
+  const _SignalsPanelTab({
+    required this.appState,
+    required this.controller,
+    required this.onTapLocation,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -836,40 +868,47 @@ class _SignalsPanelTab extends StatelessWidget {
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: _glassCard(
-            padding: const EdgeInsets.all(12),
-            radius: 12,
-            child: Row(
-              children: [
-                Container(
-                  width: 36, height: 36,
-                  decoration: BoxDecoration(color: sourceColor.withOpacity(0.1), shape: BoxShape.circle),
-                  child: Icon(icon, color: sourceColor, size: 18),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(source.toUpperCase().replaceAll('_', ' '), style: syne(8, weight: FontWeight.w700, color: sourceColor, letterSpacing: 1)),
-                          const Spacer(),
-                          Text(signal['timestamp'] ?? '', style: inter(9, color: textSecondary)),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(signal['text'] ?? '', style: inter(12, color: textPrimary)),
-                    ],
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              final locationHint = signal['location_hint'] ?? 'Islamabad';
+              onTapLocation(locationHint);
+            },
+            child: _glassCard(
+              padding: const EdgeInsets.all(12),
+              radius: 12,
+              child: Row(
+                children: [
+                  Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(color: sourceColor.withOpacity(0.1), shape: BoxShape.circle),
+                    child: Icon(icon, color: sourceColor, size: 18),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: sourceColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)),
-                  child: Text(credibility.toStringAsFixed(2), style: syne(10, weight: FontWeight.w800, color: sourceColor)),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(source.toUpperCase().replaceAll('_', ' '), style: syne(8, weight: FontWeight.w700, color: sourceColor, letterSpacing: 1)),
+                            const Spacer(),
+                            Text(signal['timestamp'] ?? '', style: inter(9, color: textSecondary)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(signal['text'] ?? '', style: inter(12, color: textPrimary)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: sourceColor.withOpacity(0.15), borderRadius: BorderRadius.circular(4)),
+                    child: Text(credibility.toStringAsFixed(2), style: syne(10, weight: FontWeight.w800, color: sourceColor)),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -882,8 +921,13 @@ class _SignalsPanelTab extends StatelessWidget {
 class _CrisesPanelTab extends StatelessWidget {
   final CrisisAppState appState;
   final ScrollController controller;
+  final ValueChanged<String> onTapLocation;
 
-  const _CrisesPanelTab({required this.appState, required this.controller});
+  const _CrisesPanelTab({
+    required this.appState,
+    required this.controller,
+    required this.onTapLocation,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -911,73 +955,79 @@ class _CrisesPanelTab extends StatelessWidget {
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: _glassCard(
-            accent: severityColor,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header Row
-                Row(
-                  children: [
-                    const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
-                    const SizedBox(width: 8),
-                    Text(crisis.type.toUpperCase(), style: syne(14, weight: FontWeight.w800, color: textPrimary)),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: severityColor.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
-                      child: Text('SEVERITY: ${severity.toStringAsFixed(1)}', style: syne(10, weight: FontWeight.w800, color: severityColor)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text('Location: ${crisis.location}', style: inter(12, color: textSecondary)),
-                
-                // Confidence gauge
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text('Confidence', style: syne(9, color: textSecondary)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(2),
-                        child: LinearProgressIndicator(
-                          value: crisis.confidence,
-                          backgroundColor: Colors.white10,
-                          valueColor: AlwaysStoppedAnimation<Color>(accentInfo),
-                          minHeight: 4,
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              onTapLocation(crisis.location);
+            },
+            child: _glassCard(
+              accent: severityColor,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Row
+                  Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+                      const SizedBox(width: 8),
+                      Text(crisis.type.toUpperCase(), style: syne(14, weight: FontWeight.w800, color: textPrimary)),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: severityColor.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                        child: Text('SEVERITY: ${severity.toStringAsFixed(1)}', style: syne(10, weight: FontWeight.w800, color: severityColor)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text('Location: ${crisis.location}', style: inter(12, color: textSecondary)),
+                  
+                  // Confidence gauge
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text('Confidence', style: syne(9, color: textSecondary)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(2),
+                          child: LinearProgressIndicator(
+                            value: crisis.confidence,
+                            backgroundColor: Colors.white10,
+                            valueColor: AlwaysStoppedAnimation<Color>(accentInfo),
+                            minHeight: 4,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text('${(crisis.confidence * 100).toInt()}%', style: syne(9, color: textPrimary)),
-                  ],
-                ),
+                      const SizedBox(width: 8),
+                      Text('${(crisis.confidence * 100).toInt()}%', style: syne(9, color: textPrimary)),
+                    ],
+                  ),
 
-                // Cascade effects
-                if (crisis.cascadeEffects.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 6, runSpacing: 6,
-                    children: crisis.cascadeEffects.map((e) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
-                      child: Text(e, style: inter(9, color: textPrimary)),
-                    )).toList(),
+                  // Cascade effects
+                  if (crisis.cascadeEffects.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6, runSpacing: 6,
+                      children: crisis.cascadeEffects.map((e) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
+                        child: Text(e, style: inter(9, color: textPrimary)),
+                      )).toList(),
+                    ),
+                  ],
+
+                  // Action Plan / Stakeholder communication triggers
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: () => _showMessagesDialog(context, state, crisis.id),
+                    style: ElevatedButton.styleFrom(backgroundColor: surfaceLight),
+                    icon: const Icon(Icons.forum_rounded, size: 14, color: accentInfo),
+                    label: Text('STAKEHOLDER COMMUNIQUE', style: syne(10, weight: FontWeight.w700, color: textPrimary)),
                   ),
                 ],
-
-                // Action Plan / Stakeholder communication triggers
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: () => _showMessagesDialog(context, state, crisis.id),
-                  style: ElevatedButton.styleFrom(backgroundColor: surfaceLight),
-                  icon: const Icon(Icons.forum_rounded, size: 14, color: accentInfo),
-                  label: Text('STAKEHOLDER COMMUNIQUE', style: syne(10, weight: FontWeight.w700, color: textPrimary)),
-                ),
-              ],
+              ),
             ),
           ),
         );
