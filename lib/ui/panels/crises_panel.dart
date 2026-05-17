@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import '../../models/crisis_state.dart';
 import '../../providers/crisis_provider.dart';
 import '../design_system.dart';
@@ -351,19 +352,15 @@ class _CrisisDetailModal extends StatelessWidget {
                 Text('CRISIS DETAILS', style: syne(22, color: accentInfo, weight: FontWeight.w700)),
                 const SizedBox(height: 16),
                 
-                // Cascade Effects
-                Text('ALL CASCADE EFFECTS', style: inter(12, color: textSecondary, weight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                ...crisis.cascadeEffects.map((c) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.arrow_right_rounded, color: accentWarning, size: 16),
-                      Expanded(child: Text(c, style: inter(13, color: textPrimary))),
-                    ],
-                  ),
-                )),
+                // Predictive Timeline
+                Text('PREDICTED TIMELINE', style: inter(12, color: textSecondary, weight: FontWeight.w600)),
+                _PredictiveTimelineWidget(crisis: crisis),
+                const SizedBox(height: 12),
+
+                // Cascade Effects Visualizer
+                Text('CRISIS CASCADE CHAIN', style: inter(12, color: textSecondary, weight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                _CascadeChainWidget(crisis: crisis),
                 const SizedBox(height: 20),
 
                 // Resources
@@ -404,10 +401,10 @@ class _CrisisDetailModal extends StatelessWidget {
                   // Stakeholder Messages
                   Text('STAKEHOLDER MESSAGES', style: inter(12, color: textSecondary, weight: FontWeight.w600)),
                   const SizedBox(height: 8),
-                  _MsgExpandable(title: 'Public (EN)', body: allocation!.stakeholderMessages.publicEnglish, color: Colors.cyanAccent),
-                  _MsgExpandable(title: 'Public (UR)', body: allocation!.stakeholderMessages.publicUrdu, color: Colors.cyanAccent),
-                  _MsgExpandable(title: 'Hospital', body: allocation!.stakeholderMessages.pimsHospital, color: Colors.pinkAccent),
-                  _MsgExpandable(title: 'Traffic', body: allocation!.stakeholderMessages.trafficAuthority, color: Colors.amber),
+                  _StakeholderMessageCard(title: 'Public (EN)', body: allocation!.stakeholderMessages.publicEnglish, color: Colors.cyanAccent, index: 0),
+                  _StakeholderMessageCard(title: 'Public (UR)', body: allocation!.stakeholderMessages.publicUrdu, color: Colors.cyanAccent, index: 1, isUrdu: true),
+                  _StakeholderMessageCard(title: 'Hospital', body: allocation!.stakeholderMessages.pimsHospital, color: Colors.pinkAccent, index: 2),
+                  _StakeholderMessageCard(title: 'Traffic', body: allocation!.stakeholderMessages.trafficAuthority, color: Colors.amber, index: 3),
                   const SizedBox(height: 20),
                 ],
 
@@ -460,26 +457,162 @@ class _ResVal extends StatelessWidget {
   );
 }
 
-class _MsgExpandable extends StatelessWidget {
+class _StakeholderMessageCard extends StatefulWidget {
   final String title;
   final String body;
   final Color color;
-  const _MsgExpandable({required this.title, required this.body, required this.color});
+  final int index;
+  final bool isUrdu;
+
+  const _StakeholderMessageCard({
+    required this.title,
+    required this.body,
+    required this.color,
+    required this.index,
+    this.isUrdu = false,
+  });
 
   @override
-  Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.only(bottom: 8),
-    decoration: BoxDecoration(
-      color: surfaceLight.withOpacity(0.5),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: color.withOpacity(0.3)),
-    ),
-    child: ExpansionTile(
-      title: Text(title, style: inter(13, color: color, weight: FontWeight.w600)),
-      childrenPadding: const EdgeInsets.all(12),
-      children: [Text(body, style: inter(12, color: textPrimary))],
-    ),
-  );
+  State<_StakeholderMessageCard> createState() => _StakeholderMessageCardState();
+}
+
+class _StakeholderMessageCardState extends State<_StakeholderMessageCard> {
+  final FlutterTts _tts = FlutterTts();
+  bool _isPlaying = false;
+
+  Future<void> _speak() async {
+    setState(() => _isPlaying = true);
+    await _tts.setLanguage('ur-PK');
+    await _tts.speak(widget.body);
+    _tts.setCompletionHandler(() {
+      if (mounted) setState(() => _isPlaying = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final nowTime = '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}';
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: surfaceLight.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border(left: BorderSide(color: widget.color, width: 4)),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.mark_email_read_rounded, size: 14, color: widget.color),
+              const SizedBox(width: 6),
+              Text(widget.title.toUpperCase(), style: inter(11, color: widget.color, weight: FontWeight.w700)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(color: accentSafe.withOpacity(0.15), borderRadius: BorderRadius.circular(4)),
+                child: Text('SENT $nowTime', style: inter(9, color: accentSafe, weight: FontWeight.w700)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(widget.body, style: inter(13, color: textPrimary).copyWith(height: widget.isUrdu ? 1.6 : 1.3)),
+          if (widget.isUrdu) ...[
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: _isPlaying ? null : _speak,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: widget.color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: widget.color.withOpacity(0.5)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(_isPlaying ? Icons.volume_up_rounded : Icons.campaign_rounded, size: 16, color: widget.color),
+                    const SizedBox(width: 8),
+                    Text(_isPlaying ? 'BROADCASTING...' : 'BROADCAST ALERT', style: inter(11, color: widget.color, weight: FontWeight.w700)),
+                  ],
+                ),
+              ),
+            ),
+          ]
+        ],
+      ),
+    ).animate().fadeIn(duration: 400.ms, delay: (widget.index * 200).ms).slideX(begin: 0.05);
+  }
+}
+
+class _PredictiveTimelineWidget extends StatelessWidget {
+  final Crisis crisis;
+  const _PredictiveTimelineWidget({required this.crisis});
+
+  @override
+  Widget build(BuildContext context) {
+    final isRetracted = crisis.status == CrisisStatus.retracted;
+    final nowTime = '10:52';
+    final peakTime = '11:15';
+    final resolvedTime = isRetracted ? '10:54' : '12:30';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Background line
+          Positioned(
+            left: 20, right: 20, top: 10,
+            child: Container(
+              height: 2,
+              color: isRetracted ? accentSafe.withOpacity(0.5) : surfaceLight,
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _TimelineDot('DETECTED', '10:42', true, isRetracted ? accentSafe : accentInfo),
+              _TimelineDot('NOW', nowTime, true, isRetracted ? accentSafe : accentInfo),
+              _TimelineDot('PEAK', peakTime, !isRetracted, isRetracted ? accentSafe : accentCritical),
+              _TimelineDot(isRetracted ? 'RESOLVED' : 'EST RESOLVE', resolvedTime, isRetracted, isRetracted ? accentSafe : textSecondary),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimelineDot extends StatelessWidget {
+  final String label, time;
+  final bool active;
+  final Color color;
+  const _TimelineDot(this.label, this.time, this.active, this.color);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12, height: 12,
+          decoration: BoxDecoration(
+            color: active ? color : surface,
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 2),
+            boxShadow: active ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 6)] : [],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(label, style: inter(9, color: textSecondary, weight: FontWeight.w600)),
+        Text(time, style: inter(10, color: color, weight: FontWeight.w700)),
+      ],
+    );
+  }
 }
 
 class _CompRow extends StatelessWidget {
@@ -497,4 +630,109 @@ class _CompRow extends StatelessWidget {
       ],
     ),
   );
+}
+
+class _CascadeChainNode {
+  final String label;
+  final bool isActive;
+  
+  _CascadeChainNode(this.label, this.isActive);
+}
+
+class _CascadeChainWidget extends StatelessWidget {
+  final Crisis crisis;
+  
+  const _CascadeChainWidget({required this.crisis});
+
+  @override
+  Widget build(BuildContext context) {
+    bool isRetracted = crisis.status == CrisisStatus.retracted;
+    bool isFlood = crisis.type.toLowerCase().contains('flood');
+    
+    List<_CascadeChainNode> nodes = [];
+    if (isFlood) {
+      nodes = [
+        _CascadeChainNode('Urban Flood', true),
+        _CascadeChainNode('Srinagar Hwy Blocked', true),
+        _CascadeChainNode('G-9 Overflow (+30%)', crisis.status == CrisisStatus.active && crisis.severity != null && crisis.severity! >= 8),
+        _CascadeChainNode('PIMS ER Surge (+15%)', false),
+        _CascadeChainNode('IESCO Grid Hazard', false),
+      ];
+    } else {
+      nodes = [
+        _CascadeChainNode('Road Accident', true),
+        _CascadeChainNode('Murree Rd Blocked', true),
+        _CascadeChainNode('Rawalpindi Spillover', false),
+        _CascadeChainNode('Standby Dispatch', false),
+      ];
+    }
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeInOutCubic,
+      child: isRetracted
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: accentSafe.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: accentSafe.withOpacity(0.5)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: accentSafe, size: 20),
+                  const SizedBox(width: 8),
+                  Text('INCIDENT CONTAINED & SECURED', style: inter(12, color: accentSafe, weight: FontWeight.w700, letterSpacing: 1.0)),
+                ],
+              ),
+            ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.9, 0.9))
+          : SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  for (int i = 0; i < nodes.length; i++) ...[
+                    _buildNode(nodes[i], i),
+                    if (i < nodes.length - 1)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: const Icon(Icons.arrow_forward_rounded, color: textSecondary, size: 16)
+                            .animate(onPlay: (controller) => controller.repeat())
+                            .shimmer(duration: 1500.ms, color: Colors.white54),
+                      ),
+                  ]
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildNode(_CascadeChainNode node, int index) {
+    final borderColor = node.isActive ? accentCritical : accentWarning;
+    final bgColor = node.isActive ? accentCritical.withOpacity(0.15) : surfaceLight;
+    
+    Widget chip = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: node.isActive ? borderColor : borderColor.withOpacity(0.5),
+          width: node.isActive ? 1.5 : 1.0,
+        ),
+      ),
+      child: Text(
+        node.label,
+        style: inter(11, color: node.isActive ? Colors.white : textSecondary, weight: node.isActive ? FontWeight.w600 : FontWeight.w500),
+      ),
+    );
+
+    if (node.isActive) {
+      chip = chip.animate(onPlay: (controller) => controller.repeat(reverse: true))
+          .boxShadow(begin: BoxShadow(color: accentCritical.withOpacity(0.0), blurRadius: 0), end: BoxShadow(color: accentCritical.withOpacity(0.4), blurRadius: 8));
+    }
+
+    return chip.animate().fadeIn(delay: (index * 100).ms).slideX(begin: 0.1);
+  }
 }

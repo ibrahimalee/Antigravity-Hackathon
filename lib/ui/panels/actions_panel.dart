@@ -77,9 +77,9 @@ class ActionLogPanel extends ConsumerWidget {
             ),
 
             // SECTION 4 - Baseline Comparison
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: _BaselineComparisonPanel(),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: _LiveImpactPanel(),
             ),
           ],
         );
@@ -384,53 +384,159 @@ class _TradeRow extends StatelessWidget {
   }
 }
 
-class _BaselineComparisonPanel extends StatelessWidget {
+class _LiveImpactPanel extends ConsumerWidget {
+  const _LiveImpactPanel();
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appState = ref.watch(crisisProvider);
+    final isActivated = appState.currentState != null;
+    
     return GlassCard(
       padding: const EdgeInsets.all(16),
+      accentColor: accentSafe,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('AGENTIC vs RULE-BASED COMPARISON', style: inter(11, weight: FontWeight.w500, color: textPrimary, letterSpacing: 1.5)),
-          const SizedBox(height: 12),
+          Text('REAL-TIME OPERATIONAL IMPACT', style: inter(11, weight: FontWeight.w600, color: accentSafe, letterSpacing: 1.5)),
+          const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(flex: 2, child: Text('METRIC', style: inter(10, color: textSecondary))),
-              Expanded(child: Text('RULE-BASED', style: inter(10, color: textSecondary))),
-              Expanded(child: Text('CIRO', style: inter(10, color: textSecondary))),
+              Expanded(flex: 2, child: Text('IMPACT METRIC', style: inter(10, color: textSecondary, weight: FontWeight.w600))),
+              Expanded(child: Text('BEFORE CIRO', style: inter(10, color: accentCritical, weight: FontWeight.w700))),
+              Expanded(child: Text('AFTER CIRO', style: inter(10, color: accentSafe, weight: FontWeight.w700))),
             ],
           ),
-          const SizedBox(height: 8),
-          _BRow('Alert Accuracy', '34%', '91%', true),
-          _BRow('False Positives', 'High', 'Low', false),
-          _BRow('Multi-crisis handling', '✗ None', '✓ Dynamic', true),
-          _BRow('Response coordination', 'Manual', 'Autonomous', false),
-          _BRow('Urdu/Roman Urdu support', '✗', '✓ Native', true),
-          _BRow('Confidence scoring', '✗', '✓ Real-time', false),
+          const Divider(color: Colors.white10, height: 16),
+          _AnimatedImpactRow(
+            index: 0,
+            metric: 'Avg Response Time',
+            beforeText: '22 min',
+            startVal: 22.0,
+            endVal: isActivated ? 9.0 : 22.0,
+            suffix: ' min',
+            isPercentage: false,
+          ),
+          _AnimatedImpactRow(
+            index: 1,
+            metric: 'False Alert Rate',
+            beforeText: '66%',
+            startVal: 66.0,
+            endVal: isActivated && appState.currentPhaseNumber >= 3 ? 9.0 : 66.0,
+            suffix: '%',
+            isPercentage: true,
+          ),
+          _AnimatedImpactRow(
+            index: 2,
+            metric: 'Uncoordinated Crises',
+            beforeText: '2',
+            startVal: 2.0,
+            endVal: isActivated && appState.currentPhaseNumber >= 2 ? 0.0 : 2.0,
+            suffix: '',
+            isPercentage: false,
+          ),
+          _AnimatedImpactRow(
+            index: 3,
+            metric: 'Resources Wasted',
+            beforeText: '4 units',
+            startVal: 4.0,
+            endVal: isActivated && appState.currentPhaseNumber >= 3 ? 0.0 : 4.0,
+            suffix: ' units',
+            isPercentage: false,
+          ),
+          _AnimatedTextImpactRow(
+            index: 4,
+            metric: 'Alert Precision',
+            beforeText: 'City-wide',
+            afterText: isActivated ? '2.3 km' : 'City-wide',
+          ),
         ],
       ),
     );
   }
 }
 
-class _BRow extends StatelessWidget {
-  final String metric, rule, ciro;
-  final bool isAlt;
-  const _BRow(this.metric, this.rule, this.ciro, this.isAlt);
+class _AnimatedImpactRow extends StatelessWidget {
+  final int index;
+  final String metric;
+  final String beforeText;
+  final double startVal;
+  final double endVal;
+  final String suffix;
+  final bool isPercentage;
+
+  const _AnimatedImpactRow({
+    required this.index,
+    required this.metric,
+    required this.beforeText,
+    required this.startVal,
+    required this.endVal,
+    required this.suffix,
+    required this.isPercentage,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: isAlt ? surface.withOpacity(0.4) : bgSecondary.withOpacity(0.4),
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Expanded(flex: 2, child: Text(metric, style: inter(11, color: textPrimary))),
-          Expanded(child: Text(rule, style: inter(11, color: accentCritical, weight: FontWeight.w600))),
-          Expanded(child: Text(ciro, style: inter(11, color: accentSafe, weight: FontWeight.w600))),
+          Expanded(flex: 2, child: Text(metric, style: inter(12, color: textPrimary, weight: FontWeight.w500))),
+          Expanded(child: Text(beforeText, style: inter(12, color: accentCritical, weight: FontWeight.w600))),
+          Expanded(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: startVal, end: endVal),
+              duration: const Duration(milliseconds: 1200),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) {
+                final displayVal = value.toInt();
+                return Text(
+                  '$displayVal$suffix',
+                  style: inter(12, color: accentSafe, weight: FontWeight.w700),
+                );
+              },
+            ),
+          ),
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 400.ms, delay: (index * 150).ms).slideY(begin: 0.2, end: 0);
+  }
+}
+
+class _AnimatedTextImpactRow extends StatelessWidget {
+  final int index;
+  final String metric;
+  final String beforeText;
+  final String afterText;
+
+  const _AnimatedTextImpactRow({
+    required this.index,
+    required this.metric,
+    required this.beforeText,
+    required this.afterText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Expanded(flex: 2, child: Text(metric, style: inter(12, color: textPrimary, weight: FontWeight.w500))),
+          Expanded(child: Text(beforeText, style: inter(12, color: accentCritical, weight: FontWeight.w600))),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 600),
+              transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: ScaleTransition(scale: anim, child: child)),
+              child: Text(
+                afterText,
+                key: ValueKey(afterText),
+                style: inter(12, color: accentSafe, weight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 400.ms, delay: (index * 150).ms).slideY(begin: 0.2, end: 0);
   }
 }

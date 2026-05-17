@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../models/crisis_state.dart';
 import '../../providers/crisis_provider.dart';
 import '../design_system.dart';
@@ -33,6 +34,38 @@ class TracesPanel extends ConsumerWidget {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('SYSTEM TRACES', style: syne(14, color: textSecondary, weight: FontWeight.w700, letterSpacing: 1.5)),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    final traceData = '''
+=== ANTIGRAVITY CIRO AGENT TRACE EXPORT ===
+Timestamp: ${DateTime.now().toIso8601String()}
+
+--- AGENT 1: SIGNAL FUSION ---
+${state.agentTraces.agent1.steps.join('\n')}
+
+--- AGENT 2: CRISIS DETECTION ---
+${state.agentTraces.agent2.steps.join('\n')}
+
+--- AGENT 3: RESOURCE ALLOCATION ---
+${state.agentTraces.agent3.steps.join('\n')}
+''';
+                    Share.share(traceData, subject: 'CIRO Agent Traces');
+                  },
+                  icon: const Icon(Icons.download_rounded, size: 14),
+                  label: Text('EXPORT TRACE', style: inter(10, weight: FontWeight.w700)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: surfaceLight,
+                    foregroundColor: accentInfo,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             _TraceCard('AGENT 1: SIGNAL FUSION', accentInfo, state.agentTraces.agent1.steps.join('\n')),
             const SizedBox(height: 12),
             _TraceCard('AGENT 2: CRISIS DETECTION', accentWarning, state.agentTraces.agent2.steps.join('\n')),

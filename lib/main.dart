@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
@@ -166,6 +167,14 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
   String _timeString = '';
   Timer? _timeTimer;
 
+  BitmapDescriptor? _ambulanceIcon;
+  BitmapDescriptor? _policeIcon;
+  BitmapDescriptor? _rescueIcon;
+
+  Timer? _dispatchTimer;
+  Timer? _pulsingTimer;
+  final Map<String, double> _dispatchProgress = {};
+
   static const CameraPosition _initialCamera = CameraPosition(
     target: _islamabadCenter,
     zoom: 12.5,
@@ -176,12 +185,134 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
     super.initState();
     _initNotifications();
     _startClock();
+    _loadCustomIcons();
+    _startPulsingTimer();
   }
 
   @override
   void dispose() {
     _timeTimer?.cancel();
+    _dispatchTimer?.cancel();
+    _pulsingTimer?.cancel();
     super.dispose();
+  }
+
+  Future<BitmapDescriptor> _createCustomMarker(IconData iconData, Color color) async {
+    final pictureRecorder = PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+    const size = 96.0;
+
+    final paint = Paint()
+      ..color = color.withOpacity(0.2)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(const Offset(size / 2, size / 2), size / 2, paint);
+
+    final borderPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4;
+    canvas.drawCircle(const Offset(size / 2, size / 2), size / 2 - 2, borderPaint);
+
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+    textPainter.text = TextSpan(
+      text: String.fromCharCode(iconData.codePoint),
+      style: TextStyle(
+        fontSize: 48.0,
+        fontFamily: iconData.fontFamily,
+        package: iconData.fontPackage,
+        color: Colors.white,
+      ),
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset((size - textPainter.width) / 2, (size - textPainter.height) / 2),
+    );
+
+    final picture = pictureRecorder.endRecording();
+    final image = await picture.toImage(size.toInt(), size.toInt());
+    final bytes = await image.toByteData(format: ImageByteFormat.png);
+    return BitmapDescriptor.fromBytes(bytes!.buffer.asUint8List());
+  }
+
+  Future<void> _loadCustomIcons() async {
+    _ambulanceIcon = await _createCustomMarker(Icons.local_hospital_rounded, accentCritical);
+    _policeIcon = await _createCustomMarker(Icons.security_rounded, accentInfo);
+    _rescueIcon = await _createCustomMarker(Icons.groups_rounded, accentWarning);
+    if (mounted) setState(() {});
+  }
+
+  void _startPulsingTimer() {
+    _pulsingTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      final appState = ref.read(crisisProvider);
+      if (appState.currentState != null && appState.currentState!.finalState.activeCrises.isNotEmpty) {
+        setState(() {
+          _updateMapLayers(appState);
+        });
+      }
+    });
+  }
+
+  void _startDispatchTimer() {
+    if (_dispatchTimer != null && _dispatchTimer!.isActive) return;
+    _dispatchTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      bool needsUpdate = false;
+      final appState = ref.read(crisisProvider);
+      final currentState = appState.currentState;
+      if (currentState == null) {
+        timer.cancel();
+        return;
+      }
+
+      final activeIds = currentState.finalState.activeCrises.map((c) => c.id).toSet();
+      final retractedIds = currentState.agentTraces.agent2.crises
+          .where((c) => c.status == CrisisStatus.retracted)
+          .map((c) => c.id)
+          .toSet();
+
+      final keys = _dispatchProgress.keys.toList();
+      for (final id in keys) {
+        double current = _dispatchProgress[id] ?? 0.0;
+        if (activeIds.contains(id)) {
+          if (current < 1.0) {
+            _dispatchProgress[id] = (current + 0.0125).clamp(0.0, 1.0);
+            needsUpdate = true;
+          }
+        } else if (retractedIds.contains(id)) {
+          if (current > 0.0) {
+            _dispatchProgress[id] = (current - 0.0125).clamp(0.0, 1.0);
+            needsUpdate = true;
+          }
+        }
+      }
+
+      for (final crisis in currentState.finalState.activeCrises) {
+        if (!_dispatchProgress.containsKey(crisis.id)) {
+          _dispatchProgress[crisis.id] = 0.0;
+          needsUpdate = true;
+        }
+      }
+
+      if (needsUpdate) {
+        setState(() {
+          _updateMapLayers(appState);
+        });
+      } else {
+        bool allDone = true;
+        for (final id in _dispatchProgress.keys) {
+          double p = _dispatchProgress[id]!;
+          if (activeIds.contains(id) && p < 1.0) allDone = false;
+          if (retractedIds.contains(id) && p > 0.0) allDone = false;
+        }
+        if (allDone) {
+          timer.cancel();
+        }
+      }
+    });
   }
 
   void _startClock() {
@@ -220,6 +351,13 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
 
   String _normalize(String str) {
     return str.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  }
+
+  LatLng _getBaseCoords(String crisisLocation) {
+    if (crisisLocation.contains('G-10')) {
+      return const LatLng(33.7130, 73.0580); // PIMS HQ for G-10
+    }
+    return const LatLng(33.6938, 73.0229); // G-10 Base for others
   }
 
   LatLng _getCoords(String location) {
@@ -271,38 +409,65 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
     final currentState = appState.currentState;
     if (currentState == null) return;
 
+    double wave = sin(DateTime.now().millisecondsSinceEpoch / 2000.0 * 2 * pi);
+    double scaleFactor = 1.0 + (wave + 1.0) / 2.0 * 0.08;
+    double opacity = 0.08 + (wave + 1.0) / 2.0 * 0.07;
+
+    // We process both active and retracted crises for circles
+    final allMapCrises = [
+      ...currentState.finalState.activeCrises,
+      ...currentState.agentTraces.agent2.crises.where((c) => c.status == CrisisStatus.retracted)
+    ];
+
     // Build Circles
-    for (final crisis in currentState.finalState.activeCrises) {
+    for (final crisis in allMapCrises) {
       final coords = _getCoords(crisis.location);
-      final radius = (crisis.affectedRadiusKm ?? 1.0) * 1000.0;
+      double baseRadius = (crisis.affectedRadiusKm ?? 1.0) * 1000.0;
       
       Color statusColor = accentCritical;
       if (crisis.status == CrisisStatus.monitoring) statusColor = accentWarning;
       if (crisis.status == CrisisStatus.retracted) statusColor = accentSafe;
 
+      double finalRadius = baseRadius;
+      double finalOpacity = 0.15;
+      
+      if (crisis.status == CrisisStatus.active) {
+        finalRadius = baseRadius * scaleFactor;
+        finalOpacity = opacity;
+      } else if (crisis.status == CrisisStatus.retracted) {
+        double p = _dispatchProgress[crisis.id] ?? 0.0;
+        double shrinkFactor = Curves.easeInBack.transform(p);
+        finalRadius = baseRadius * shrinkFactor;
+        finalOpacity = 0.15 * shrinkFactor;
+        if (finalRadius <= 0.01) continue;
+      }
+
       // Base circle
       _circles.add(Circle(
         circleId: CircleId(crisis.id),
         center: coords,
-        radius: radius,
-        fillColor: statusColor.withOpacity(0.15),
+        radius: finalRadius,
+        fillColor: statusColor.withOpacity(finalOpacity),
         strokeColor: statusColor,
-        strokeWidth: 2,
+        strokeWidth: crisis.status == CrisisStatus.retracted ? (2 * Curves.easeInBack.transform(_dispatchProgress[crisis.id] ?? 0.0)).toInt() : 2,
       ));
 
       // Inner focus zone circle
       _circles.add(Circle(
         circleId: CircleId('${crisis.id}_inner'),
         center: coords,
-        radius: radius * 0.3,
-        fillColor: statusColor.withOpacity(0.30),
+        radius: finalRadius * 0.3,
+        fillColor: statusColor.withOpacity(finalOpacity * 2),
         strokeColor: statusColor,
         strokeWidth: 1,
       ));
     }
 
     // Build Markers
-    for (final crisis in currentState.finalState.activeCrises) {
+    for (final crisis in allMapCrises) {
+      if (crisis.status == CrisisStatus.retracted && (_dispatchProgress[crisis.id] ?? 0.0) <= 0.01) {
+        continue;
+      }
       final coords = _getCoords(crisis.location);
       double hue = BitmapDescriptor.hueRed;
       if (crisis.status == CrisisStatus.monitoring) hue = BitmapDescriptor.hueYellow;
@@ -317,6 +482,43 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
           snippet: '${crisis.location} — Severity ${crisis.severity?.toStringAsFixed(1) ?? "?"}/10',
         ),
       ));
+      
+      // Interpolated Resource Dispatch Markers
+      final progress = _dispatchProgress[crisis.id];
+      if (progress != null && progress > 0.0) {
+        final baseCoords = _getBaseCoords(crisis.location);
+        final currentLat = baseCoords.latitude + (coords.latitude - baseCoords.latitude) * progress;
+        final currentLng = baseCoords.longitude + (coords.longitude - baseCoords.longitude) * progress;
+        
+        final alloc = currentState.agentTraces.agent3.allocations.where((a) => a.crisisId == crisis.id).firstOrNull;
+        if (alloc != null) {
+          final rb = alloc.resourcesAssigned;
+          if (rb.ambulances > 0 && _ambulanceIcon != null) {
+            _markers.add(Marker(
+              markerId: MarkerId('${crisis.id}_res_amb'),
+              position: LatLng(currentLat + 0.0012, currentLng + 0.0012),
+              icon: _ambulanceIcon!,
+              infoWindow: InfoWindow(title: 'Ambulances', snippet: '${rb.ambulances} on route'),
+            ));
+          }
+          if (rb.policeUnits > 0 && _policeIcon != null) {
+            _markers.add(Marker(
+              markerId: MarkerId('${crisis.id}_res_pol'),
+              position: LatLng(currentLat - 0.0012, currentLng + 0.0012),
+              icon: _policeIcon!,
+              infoWindow: InfoWindow(title: 'Police', snippet: '${rb.policeUnits} on route'),
+            ));
+          }
+          if (rb.rescueTeams > 0 && _rescueIcon != null) {
+            _markers.add(Marker(
+              markerId: MarkerId('${crisis.id}_res_res'),
+              position: LatLng(currentLat, currentLng - 0.0015),
+              icon: _rescueIcon!,
+              infoWindow: InfoWindow(title: 'Rescue', snippet: '${rb.rescueTeams} on route'),
+            ));
+          }
+        }
+      }
     }
 
     // Polylines if Srinagar Flood active (Phase 2 or later)
@@ -390,6 +592,7 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
     
     ref.listen<CrisisAppState>(crisisProvider, (previous, next) {
       if (next.currentState != null) {
+        _startDispatchTimer();
         _updateMapLayers(next);
         
         final currentCrises = next.currentState!.finalState.activeCrises;
@@ -415,6 +618,27 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
             '🚨 NEW CRISIS: ${newCrisis.type.toUpperCase()}',
             'Location: ${newCrisis.location} | Severity: ${newCrisis.severity?.toStringAsFixed(1) ?? "N/A"}/10',
           );
+        }
+
+        final retractedNow = next.currentState?.agentTraces.agent2.crises.where((c) => c.status == CrisisStatus.retracted).map((c) => c.id).toSet() ?? {};
+        final retractedBefore = previous?.currentState?.agentTraces.agent2.crises.where((c) => c.status == CrisisStatus.retracted).map((c) => c.id).toSet() ?? {};
+        for (final id in retractedNow) {
+          if (!retractedBefore.contains(id)) {
+            final c = next.currentState!.agentTraces.agent2.crises.firstWhere((x) => x.id == id);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle_rounded, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text('✅ ${c.location} Alert Successfully Retracted — Assets Demobilized.', style: inter(13, color: Colors.white, weight: FontWeight.w600))),
+                  ],
+                ),
+                backgroundColor: accentSafe,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         }
       }
     });
@@ -531,56 +755,136 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
 }
 
 // ── CUSTOM TOP BAR ───────────────────────────────────────────────────────────
-class _TopBar extends StatelessWidget {
+class _TopBar extends ConsumerWidget {
   final String timeString;
   final bool isRunning;
   const _TopBar({required this.timeString, required this.isRunning});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final appState = ref.watch(crisisProvider);
+    final currentState = appState.currentState;
+    
+    int activeCount = currentState?.finalState.activeCrises.length ?? 0;
+    
+    // Calculate resource utilization
+    int totalResources = 50 + 100 + 30; // Ambulances + Police + Rescue
+    int usedResources = 0;
+    if (currentState != null) {
+        for(var alloc in currentState.agentTraces.agent3.allocations) {
+            usedResources += alloc.resourcesAssigned.ambulances;
+            usedResources += alloc.resourcesAssigned.policeUnits;
+            usedResources += alloc.resourcesAssigned.rescueTeams;
+        }
+    }
+    int percentDeployed = totalResources == 0 ? 0 : ((usedResources / totalResources) * 100).round();
+    
+    // Average confidence
+    double avgConfidence = 0.0;
+    if (currentState != null && currentState.finalState.activeCrises.isNotEmpty) {
+      double sum = 0.0;
+      for (var crisis in currentState.finalState.activeCrises) {
+        sum += crisis.confidenceScore;
+      }
+      avgConfidence = sum / currentState.finalState.activeCrises.length;
+    }
+
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
-          height: 80 + topPadding,
-          padding: EdgeInsets.only(top: topPadding, left: 20, right: 20),
+          height: 110 + topPadding,
+          padding: EdgeInsets.only(top: topPadding, left: 20, right: 20, bottom: 8),
           decoration: BoxDecoration(
             color: bgPrimary.withOpacity(0.85),
             border: const Border(bottom: BorderSide(color: Colors.white10, width: 0.5)),
           ),
-          child: Row(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('CIRO COMMAND CENTER', style: syne(14, weight: FontWeight.w800, color: accentSafe, letterSpacing: 0.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 2),
+                        Text('AUTONOMOUS CRISIS SIMULATION', style: inter(8, weight: FontWeight.w500, color: textSecondary, letterSpacing: 1), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(timeString, style: syne(14, weight: FontWeight.w700, color: accentInfo)),
+                  if (isRunning) ...[
+                    const SizedBox(width: 12),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6, height: 6,
+                          decoration: const BoxDecoration(color: accentCritical, shape: BoxShape.circle),
+                        ).animate(onPlay: (c) => c.repeat(reverse: true)).fadeOut(duration: 800.ms),
+                        const SizedBox(width: 4),
+                        Text('LIVE ENGINE', style: inter(9, weight: FontWeight.w700, color: accentCritical)),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 12),
+              // KPI Row
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
                   children: [
-                    Text('CIRO COMMAND CENTER', style: syne(14, weight: FontWeight.w800, color: accentSafe, letterSpacing: 0.5), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 2),
-                    Text('AUTONOMOUS CRISIS SIMULATION', style: inter(8, weight: FontWeight.w500, color: textSecondary, letterSpacing: 1), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    _KpiChip(icon: Icons.crisis_alert, label: '$activeCount ACTIVE', color: activeCount > 0 ? accentCritical : textSecondary, isBgColor: activeCount > 0),
+                    const SizedBox(width: 8),
+                    _KpiChip(icon: Icons.bolt_rounded, label: '$percentDeployed% DEPLOYED', color: percentDeployed > 50 ? accentWarning : accentInfo, isBgColor: false),
+                    const SizedBox(width: 8),
+                    _KpiChip(icon: Icons.track_changes_rounded, label: '${avgConfidence.toStringAsFixed(2)} CONFIDENCE', color: accentSafe, isBgColor: false),
+                    const SizedBox(width: 8),
+                    if (appState.degradedMode)
+                      _KpiChip(icon: Icons.warning_amber_rounded, label: 'DEGRADED', color: accentWarning, isBgColor: true)
+                    else
+                      _KpiChip(icon: Icons.check_circle_outline_rounded, label: 'NOMINAL', color: accentSafe, isBgColor: false),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(timeString, style: syne(14, weight: FontWeight.w700, color: accentInfo)),
-              if (isRunning) ...[
-                const SizedBox(width: 12),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 6, height: 6,
-                      decoration: const BoxDecoration(color: accentCritical, shape: BoxShape.circle),
-                    ).animate(onPlay: (c) => c.repeat(reverse: true)).fadeOut(duration: 800.ms),
-                    const SizedBox(width: 4),
-                    Text('LIVE ENGINE', style: inter(9, weight: FontWeight.w700, color: accentCritical)),
-                  ],
-                ),
-              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _KpiChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool isBgColor;
+  
+  const _KpiChip({required this.icon, required this.label, required this.color, required this.isBgColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isBgColor ? color.withOpacity(0.2) : surfaceLight,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(isBgColor ? 0.8 : 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 4),
+          Text(label, style: inter(9, color: isBgColor ? color : textPrimary, weight: FontWeight.w700)),
+        ],
       ),
     );
   }
@@ -654,9 +958,18 @@ class _PhaseIndicator extends ConsumerWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.timer_outlined, color: accentWarning, size: 14),
-                const SizedBox(width: 6),
-                Text('Next phase in: ${seconds}s', style: syne(10, weight: FontWeight.w700, color: accentWarning)),
+                SizedBox(
+                  width: 14, height: 14,
+                  child: CircularProgressIndicator(value: seconds / 12.0, color: accentWarning, strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+                Text('Next assessment in: ${seconds}s', style: syne(10, weight: FontWeight.w700, color: accentWarning)),
+                const SizedBox(width: 12),
+                Icon(Icons.smart_toy_rounded, size: 14, color: accentSafe).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(0.8, 0.8)),
+                const SizedBox(width: 4),
+                Icon(Icons.psychology_rounded, size: 14, color: accentInfo).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(0.8, 0.8), delay: 200.ms),
+                const SizedBox(width: 4),
+                Icon(Icons.hub_rounded, size: 14, color: accentPurple).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(0.8, 0.8), delay: 400.ms),
               ],
             ),
           ).animate().fadeIn().scale(),

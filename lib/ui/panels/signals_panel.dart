@@ -197,6 +197,19 @@ class _SignalCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: inter(13, color: textPrimary).copyWith(height: isUrdu ? 1.5 : 1.2),
                   ),
+                  if (isUrdu) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _ParsedChip(icon: '📍', label: text.toLowerCase().contains('g-10') ? 'G-10' : 'Srinagar Hwy', delay: 0),
+                        _ParsedChip(icon: '🌊', label: 'FLOOD', delay: 100),
+                        _ParsedChip(icon: '🚗', label: 'Vehicles trapped', delay: 200),
+                        _ParsedChip(icon: '🔴', label: 'HIGH', delay: 300),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -225,5 +238,33 @@ class _SignalCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _ParsedChip extends StatelessWidget {
+  final String icon;
+  final String label;
+  final int delay;
+  
+  const _ParsedChip({required this.icon, required this.label, required this.delay});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 10)),
+          const SizedBox(width: 4),
+          Text(label, style: inter(9, color: textSecondary, weight: FontWeight.w600)),
+        ],
+      ),
+    ).animate().fadeIn(duration: 300.ms, delay: delay.ms).scale(begin: const Offset(0.8, 0.8));
   }
 }
