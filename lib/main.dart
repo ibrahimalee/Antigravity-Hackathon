@@ -53,13 +53,13 @@ const _islamabadCenter = LatLng(33.7215, 73.0433);
 
 const _locations = {
   'G-10': LatLng(33.6938, 73.0229),
-  'G-13': LatLng(33.6667, 73.0000),
-  'Murree Road': LatLng(33.7200, 73.0900),
-  'F-7': LatLng(33.7294, 73.0479),
+  'G-13': LatLng(33.6420, 72.9680),
+  'Murree Road': LatLng(33.6631, 73.0844),
+  'F-7': LatLng(33.7280, 73.0560),
   'Dhok Hassu': LatLng(33.6300, 73.0800),
-  'G-9': LatLng(33.7050, 73.0229),
-  'PIMS Hospital': LatLng(33.7197, 73.0699),
-  'Srinagar Highway': LatLng(33.7100, 73.0500),
+  'G-9': LatLng(33.6900, 73.0300),
+  'PIMS Hospital': LatLng(33.7130, 73.0580),
+  'Srinagar Highway': LatLng(33.6850, 73.0150),
 };
 
 // ── DARK MAP STYLE ───────────────────────────────────────────────────────────
@@ -202,9 +202,15 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
     );
   }
 
+  String _normalize(String str) {
+    return str.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  }
+
   LatLng _getCoords(String location) {
+    final normLocation = _normalize(location);
     for (final entry in _locations.entries) {
-      if (location.toLowerCase().contains(entry.key.toLowerCase())) {
+      final normKey = _normalize(entry.key);
+      if (normLocation.contains(normKey) || normKey.contains(normLocation)) {
         return entry.value;
       }
     }
@@ -290,9 +296,9 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
       _polylines['srinagar_closure'] = Polyline(
         polylineId: const PolylineId('srinagar_closure'),
         points: const [
-          LatLng(33.7100, 73.0300),
-          LatLng(33.7000, 73.0229),
-          LatLng(33.6938, 73.0229),
+          LatLng(33.6890, 73.0250),
+          LatLng(33.6850, 73.0150),
+          LatLng(33.6810, 73.0050),
         ],
         color: accentCritical,
         width: 5,
@@ -302,9 +308,9 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
       _polylines['ijp_alternate'] = const Polyline(
         polylineId: PolylineId('ijp_alternate'),
         points: [
-          LatLng(33.7100, 73.0100),
-          LatLng(33.7050, 73.0050),
-          LatLng(33.6938, 73.0229),
+          LatLng(33.6600, 73.0050),
+          LatLng(33.6620, 73.0150),
+          LatLng(33.6640, 73.0250),
         ],
         color: accentSafe,
         width: 4,
