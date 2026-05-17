@@ -1,0 +1,128 @@
+{
+  "simulation_time": "10:52",
+  "scenario": "api_failure",
+  "formula_version": "v2_fixed",
+  "api_failure": { "signal_id": 4, "source": "weather_api", "reason": "API unavailable", "fallback": "cached", "cached_value": "68mm/hr" },
+  "agent_traces": {
+    "agent1_signal_fusion": {
+      "steps": [
+        "REF_TIME=10:52. WEATHER API FAILURE DETECTED: signal id=4 unavailable. Using last cached value: 68mm/hr from 10:45.",
+        "DEGRADED CREDIBILITY: cached signal credibility = base(0.90) x degradation_factor(0.80) = 0.72",
+        "Freshness for cached S4 (last seen 10:45, now 10:52, age=7min): 0.72 x 0.9 = 0.648 -> 0.65",
+        "Freshness others: S1(10min)=0.9 | S2(9min)=0.9 | S3(8min)=0.9 | S5(6min)=0.9 | S6(2min)=1.0 | S7(0min)=1.0",
+        "G-10 creds: S1=0.495 | S2=0.495 | S3=0.495 | S4_cached=0.65 | S5=0.72. mean=(0.495+0.495+0.495+0.65+0.72)/5=0.571",
+        "CORROBORATION: types=[anonymous_social,weather_api(CACHED),traffic_api]=3>=3->TRUE. 0.571x1.35=0.771->0.77",
+        "Murree Road: S6=0.35 | S7=0.80. mean=0.575. NOT corroborated. credibility=0.575",
+        "DEGRADED MODE ACTIVE: confidence reduced G-10 from 0.81->0.77 due to stale weather data. All outputs flagged degraded_mode=true."
+      ],
+      "fused_signals": [
+        {
+          "location": "G-10",
+          "event_type": "urban_flood",
+          "credibility_score": 0.77,
+          "source_count": 5,
+          "mention_velocity": 3,
+          "source_types": ["anonymous_social", "weather_api_cached", "traffic_api"],
+          "corroborated": true,
+          "data_quality_note": "weather_api signal is CACHED (68mm/hr from 10:45). Credibility degraded."
+        },
+        {
+          "location": "Murree Road",
+          "event_type": "road_accident",
+          "credibility_score": 0.575,
+          "source_count": 2,
+          "mention_velocity": 1,
+          "source_types": ["anonymous_social", "traffic_api"],
+          "corroborated": false
+        }
+      ]
+    },
+    "agent2_crisis_detection": {
+      "steps": [
+        "ISB-001 G-10/urban_flood: 0.77>=0.60 -> CRISIS. base=7, bonus=+1, penalty(0.77>=0.70)=0, severity=8.",
+        "NOTE: severity unchanged (8) but confidence reduced 0.81->0.77 due to weather API outage.",
+        "ISB-002 Murree Road: 0.575<0.60 -> MONITORING. Unchanged.",
+        "DEGRADED MODE: all crisis confidence scores flagged as degraded. Operators must consider weather data may be up to 7 minutes stale."
+      ],
+      "crises": [
+        {
+          "id": "ISB-001",
+          "type": "urban_flood",
+          "location": "G-10",
+          "severity": 8,
+          "confidence": 0.77,
+          "affected_radius_km": 2.5,
+          "cascade_effects": [
+            "Traffic displacement to adjacent sectors",
+            "Hospital ER demand +15%",
+            "Electrical hazard risk in flooded zones"
+          ],
+          "status": "ACTIVE",
+          "data_quality_warning": "Weather API offline. Confidence degraded from 0.81 to 0.77. Rainfall intensity unverified since 10:45."
+        },
+        {
+          "id": "ISB-002",
+          "type": "road_accident",
+          "location": "Murree Road",
+          "severity": null,
+          "confidence": 0.575,
+          "affected_radius_km": null,
+          "cascade_effects": [],
+          "status": "MONITORING"
+        }
+      ]
+    },
+    "agent3_resource_allocation": {
+      "steps": [
+        "ISB-001 priority: score=8x8/(1+0)=64.0. DEGRADED confidence noted but does not change priority rank.",
+        "ALLOCATE ISB-001: ambulances=2, rescue_teams=2, police_units=3, medical_vans=1 (unchanged from nominal).",
+        "POOL REMAINING: ambulances=2, rescue_teams=1, police_units=2, medical_vans=1",
+        "DEGRADED MODE ACTION: notify operators to seek alternate rainfall data (CDA weather station, field observer)."
+      ],
+      "allocations": [
+        {
+          "crisis_id": "ISB-001",
+          "priority_score": 64.0,
+          "resources_assigned": { "ambulances": 2, "rescue_teams": 2, "police_units": 3, "medical_vans": 1 },
+          "actions": [
+            { "description": "Maintain full resource deployment at G-10 — degraded mode does not reduce severity assessment", "state_change": "All G-10 resource icons remain active; yellow DEGRADED DATA banner shown on dashboard header" },
+            { "description": "Flag weather data as stale on operator dashboard — request CDA weather station fallback", "state_change": "Weather layer card shows orange CACHED badge with timestamp 10:45; API retry spinner visible" },
+            { "description": "Notify field team at G-10 to provide manual rainfall observation every 5 minutes", "state_change": "Field team chat widget opens on dashboard with auto-prompt 'Report current rainfall intensity'" },
+            { "description": "Maintain Srinagar Highway diversion — insufficient data to stand down", "state_change": "Road diversion overlay remains red; no changes to traffic routing" },
+            { "description": "Continue PIMS Hospital trauma readiness", "state_change": "PIMS widget remains yellow 'Trauma Ready'; no changes to bed reservation" }
+          ],
+          "stakeholder_messages": {
+            "public_english": "Emergency alert: Severe urban_flood in G-10. Avoid Srinagar Highway. Use IJP Road as alternate. Stay safe. [Note: Weather monitoring temporarily degraded — response continues at full capacity]",
+            "public_urdu": "ہنگامی الرٹ: G-10 میں شدید شہری سیلاب۔ سری نگر ہائی وے سے پرہیز کریں۔ متبادل راستہ آئی جے پی روڈ استعمال کریں۔",
+            "pims_hospital": "Mass casualty alert: urban_flood G-10. Prepare 8 trauma beds. ETA of first ambulance: 5 min. [Weather API degraded — confidence 0.77, maintain readiness]",
+            "traffic_authority": "Incident Command: Srinagar Highway blocked at G-10. DEGRADED MODE: weather API offline since 10:45. Maintain all diversions until further notice.",
+            "iesco_utility": "Safety alert: urban_flood in G-10. Risk of electrical hazard. Dispatch crew to G-10 sector. [Rainfall data cached from 10:45 — field verification recommended]",
+            "media_command": "Incident ID #ISB-001. Type: urban_flood. Severity: 8/10. Confidence: 0.77 (DEGRADED — weather API offline). Resources deployed: 2 ambulances, 2 rescue_teams, 3 police_units, 1 medical_van."
+          }
+        }
+      ]
+    }
+  },
+  "final_state": {
+    "active_crises": [
+      { "id": "ISB-001", "type": "urban_flood", "location": "G-10", "severity": 8, "confidence": 0.77, "affected_radius_km": 2.5, "status": "ACTIVE" }
+    ],
+    "monitoring_events": [
+      { "id": "ISB-002", "type": "road_accident", "location": "Murree Road", "confidence": 0.575, "status": "MONITORING" }
+    ],
+    "allocations": [
+      { "crisis_id": "ISB-001", "ambulances": 2, "rescue_teams": 2, "police_units": 3, "medical_vans": 1 }
+    ],
+    "resource_pool_remaining": { "ambulances": 2, "rescue_teams": 1, "police_units": 2, "medical_vans": 1 },
+    "pending_alerts": [
+      "ISB-001 SMS active — G-10 2.5km radius",
+      "PIMS Hospital ER on standby",
+      "Srinagar Highway diversion active",
+      "CDA weather station fallback request issued"
+    ],
+    "system_warnings": [
+      { "type": "API_FAILURE", "source": "weather_api", "signal_id": 4, "cached_value": "68mm/hr", "cached_at": "10:45", "impact": "G-10 confidence reduced from 0.81 to 0.77" }
+    ],
+    "degraded_mode": true
+  }
+}

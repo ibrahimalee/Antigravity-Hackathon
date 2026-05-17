@@ -140,6 +140,8 @@ class _TraceCard extends StatelessWidget {
   }
 
   List<TextSpan> _parseLine(String line) {
+    if (line.contains('[COMMANDER_OVERRIDE]')) return _splitByWord(line, '[COMMANDER_OVERRIDE]', accentWarning, isBold: true, styleWholeLine: true);
+    if (line.contains('⚡ Using cached inference response')) return _splitByWord(line, '⚡ Using cached inference response (offline mode)', accentWarning, isBold: true);
     if (line.contains('CONFIDENCE:')) return _splitByWord(line, 'CONFIDENCE:', accentInfo);
     if (line.contains('SEVERITY:')) return _splitByWord(line, 'SEVERITY:', accentCritical);
     if (line.contains('ALLOCATED:')) return _splitByWord(line, 'ALLOCATED:', accentSafe);
@@ -148,7 +150,10 @@ class _TraceCard extends StatelessWidget {
     return [TextSpan(text: line)];
   }
 
-  List<TextSpan> _splitByWord(String text, String keyword, Color color, {bool isBold = false}) {
+  List<TextSpan> _splitByWord(String text, String keyword, Color color, {bool isBold = false, bool styleWholeLine = false}) {
+    if (styleWholeLine) {
+      return [TextSpan(text: text, style: TextStyle(color: color, fontWeight: FontWeight.w700, height: 1.5))];
+    }
     final idx = text.indexOf(keyword);
     if (idx == -1) return [TextSpan(text: text)];
     return [

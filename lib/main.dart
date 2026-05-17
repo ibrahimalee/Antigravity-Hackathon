@@ -163,6 +163,7 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
   final Set<Circle> _circles = {};
   final Set<Marker> _markers = {};
   final Map<String, Polyline> _polylines = {};
+  final Map<String, Polygon> _polygons = {};
   int _selectedTab = 0;
   String _timeString = '';
   Timer? _timeTimer;
@@ -186,7 +187,7 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
     _initNotifications();
     _startClock();
     _loadCustomIcons();
-    _startPulsingTimer();
+    _startAnimationTimer();
   }
 
   @override
@@ -242,10 +243,57 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
     if (mounted) setState(() {});
   }
 
-  void _startPulsingTimer() {
-    _pulsingTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+  void _startAnimationTimer() {
+    if (_pulsingTimer != null && _pulsingTimer!.isActive) return;
+    
+    _pulsingTimer = Timer.periodic(const Duration(milliseconds: 120), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
       final appState = ref.read(crisisProvider);
-      if (appState.currentState != null && appState.currentState!.finalState.activeCrises.isNotEmpty) {
+      final currentState = appState.currentState;
+      if (currentState == null) return;
+
+      bool needsUpdate = false;
+      
+      // Pulse animation always needs update if crises are active
+      if (currentState.finalState.activeCrises.isNotEmpty) {
+        needsUpdate = true;
+      }
+
+      // Dispatch Interpolation
+      final activeIds = currentState.finalState.activeCrises.map((c) => c.id).toSet();
+      final retractedIds = currentState.agentTraces.agent2.crises
+          .where((c) => c.status == CrisisStatus.retracted)
+          .map((c) => c.id)
+          .toSet();
+
+      final keys = _dispatchProgress.keys.toList();
+      for (final id in keys) {
+        double current = _dispatchProgress[id] ?? 0.0;
+        if (activeIds.contains(id)) {
+          if (current < 1.0) {
+            _dispatchProgress[id] = (current + 0.03).clamp(0.0, 1.0);
+            needsUpdate = true;
+          }
+        } else if (retractedIds.contains(id)) {
+          if (current > 0.0) {
+            _dispatchProgress[id] = (current - 0.03).clamp(0.0, 1.0);
+            needsUpdate = true;
+          }
+        }
+      }
+
+      for (final crisis in currentState.finalState.activeCrises) {
+        if (!_dispatchProgress.containsKey(crisis.id)) {
+          _dispatchProgress[crisis.id] = 0.0;
+          needsUpdate = true;
+        }
+      }
+
+      if (needsUpdate) {
         setState(() {
           _updateMapLayers(appState);
         });
@@ -546,6 +594,20 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
         width: 4,
       );
     }
+    
+    // Nullah Lai Predictive Risk Layer (Feature 3)
+    final bool g10FloodActive = currentState.finalState.activeCrises.any((c) => c.location.toLowerCase().contains('g-10') && c.type.toLowerCase().contains('flood'));
+    _polygons['nullah_lai'] = Polygon(
+      polygonId: const PolygonId('nullah_lai'),
+      points: const [
+        LatLng(33.6200, 73.0700), LatLng(33.6400, 73.0600),
+        LatLng(33.6600, 73.0500), LatLng(33.6800, 73.0400),
+        LatLng(33.6938, 73.0229),
+      ],
+      fillColor: Colors.blue.withOpacity(g10FloodActive ? 0.20 : 0.08),
+      strokeColor: Colors.blueAccent.withOpacity(0.5),
+      strokeWidth: g10FloodActive ? 2 : 1,
+    );
   }
 
   void _showInjectCrisisSheet() {
@@ -592,7 +654,7 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
     
     ref.listen<CrisisAppState>(crisisProvider, (previous, next) {
       if (next.currentState != null) {
-        _startDispatchTimer();
+        _startAnimationTimer();
         _updateMapLayers(next);
         
         final currentCrises = next.currentState!.finalState.activeCrises;
@@ -653,6 +715,7 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
             circles: _circles,
             markers: _markers,
             polylines: Set<Polyline>.of(_polylines.values),
+            polygons: Set<Polygon>.of(_polygons.values),
             onMapCreated: (controller) {
               _mapController = controller;
               controller.setMapStyle(_darkMapStyle);
@@ -785,7 +848,7 @@ class _TopBar extends ConsumerWidget {
     if (currentState != null && currentState.finalState.activeCrises.isNotEmpty) {
       double sum = 0.0;
       for (var crisis in currentState.finalState.activeCrises) {
-        sum += crisis.confidenceScore;
+        sum += crisis.confidence;
       }
       avgConfidence = sum / currentState.finalState.activeCrises.length;
     }

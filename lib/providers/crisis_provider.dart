@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/crisis_state.dart';
 import '../services/groq_service.dart';
@@ -387,6 +388,70 @@ class CrisisNotifier extends StateNotifier<CrisisAppState> {
         state = state.copyWith(isLoading: false, errorMessage: e.toString());
       }
     }
+  }
+
+  void submitCommanderOverride(String crisisId, String rationale, double severity, int ambDelta, int resDelta, int polDelta) {
+    if (_lastRawState == null) return;
+    
+    // Deep clone by round-tripping JSON
+    final jsonClone = jsonDecode(jsonEncode(_lastRawState));
+    
+    // 1. Modify the crisis severity
+    final crises = jsonClone['agent_traces']?['agent2_crisis_detection']?['crises'] as List?;
+    if (crises != null) {
+      for (var c in crises) {
+        if (c['id'] == crisisId) {
+          c['severity'] = severity;
+        }
+      }
+    }
+    
+    final finalCrises = jsonClone['final_state']?['active_crises'] as List?;
+    if (finalCrises != null) {
+      for (var c in finalCrises) {
+        if (c['id'] == crisisId) {
+          c['severity'] = severity;
+        }
+      }
+    }
+
+    // 2. Modify resource allocations
+    final allocs = jsonClone['agent_traces']?['agent3_resource_allocation']?['allocations'] as List?;
+    if (allocs != null) {
+      for (var a in allocs) {
+        if (a['crisis_id'] == crisisId) {
+          a['resources_assigned']['ambulances'] = (a['resources_assigned']['ambulances'] ?? 0) + ambDelta;
+          a['resources_assigned']['rescue_teams'] = (a['resources_assigned']['rescue_teams'] ?? 0) + resDelta;
+          a['resources_assigned']['police_units'] = (a['resources_assigned']['police_units'] ?? 0) + polDelta;
+        }
+      }
+    }
+    
+    final finalAllocs = jsonClone['final_state']?['allocations'] as List?;
+    if (finalAllocs != null) {
+      for (var a in finalAllocs) {
+        if (a['crisis_id'] == crisisId) {
+          a['ambulances'] = (a['ambulances'] ?? 0) + ambDelta;
+          a['rescue_teams'] = (a['rescue_teams'] ?? 0) + resDelta;
+          a['police_units'] = (a['police_units'] ?? 0) + polDelta;
+        }
+      }
+    }
+
+    // 3. Log the Trace
+    final steps3 = jsonClone['agent_traces']?['agent3_resource_allocation']?['steps'] as List?;
+    if (steps3 != null) {
+      final timestamp = DateTime.now().toIso8601String().substring(11, 19);
+      steps3.add('[COMMANDER_OVERRIDE] ($timestamp) Severity forced to $severity. Rationale: "$rationale". Adjustments: Amb: ${ambDelta > 0 ? "+$ambDelta" : ambDelta}, Res: ${resDelta > 0 ? "+$resDelta" : resDelta}, Pol: ${polDelta > 0 ? "+$polDelta" : polDelta}');
+    }
+
+    _lastRawState = jsonClone;
+    final parsed = CrisisState.fromJson(jsonClone);
+
+    state = state.copyWith(
+      currentState: parsed,
+      history: [...state.history, parsed],
+    );
   }
 }
 

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import '../models/crisis_state.dart';
 import 'api_keys.dart';
@@ -10,6 +11,7 @@ class GroqService {
   static const String _fallbackKey = ApiKeys.fallbackKey;
   static const String _endpoint = 'https://api.groq.com/openai/v1/chat/completions';
   
+  static bool _useFallback = true;
   static int _keyIndex = 0;
 
   static String _nextKey() {
@@ -250,8 +252,38 @@ IMPORTANT RULES:
         throw Exception('Groq API Error (${response.statusCode}): ${response.body}');
       }
     } catch (e) {
+      if (_useFallback) {
+        print('Groq API failed. Triggering DEMO RELIABILITY STRATEGY: Loading local JSON cache.');
+        return _getFallbackState(scenario);
+      }
       return _getErrorStateMap('All Groq API keys rate-limited or failed. Final attempt error: $e');
     }
+  }
+
+  Future<Map<String, dynamic>> _getFallbackState(String scenario) async {
+    String assetPath = 'assets/fallback_phase1.json';
+    final s = scenario.toLowerCase();
+    
+    // Auto-detect which phase we are in based on the scenario string passed by the provider
+    if (s.contains('second') || s.contains('murree')) {
+      assetPath = 'assets/fallback_phase2.json';
+    } else if (s.contains('field report') || s.contains('verification') || s.contains('water main')) {
+      assetPath = 'assets/fallback_phase3.json';
+    } else if (s.contains('api failure') || s.contains('weather')) {
+      assetPath = 'assets/fallback_phase4.json';
+    }
+    
+    print('Loading fallback asset: $assetPath');
+    final jsonStr = await rootBundle.loadString(assetPath);
+    final map = jsonDecode(jsonStr);
+    
+    // Inject the offline mode warning into the agent traces
+    if (map['agent_traces'] != null && map['agent_traces']['agent1_signal_fusion'] != null) {
+      final steps = List<dynamic>.from(map['agent_traces']['agent1_signal_fusion']['steps'] ?? []);
+      steps.insert(0, '[system] WARNING: ⚡ Using cached inference response (offline mode)');
+      map['agent_traces']['agent1_signal_fusion']['steps'] = steps;
+    }
+    return map;
   }
 
   // Compatibility wrapper for original caller

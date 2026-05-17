@@ -18,6 +18,7 @@ class _SignalFeedPanelState extends ConsumerState<SignalFeedPanel> {
   @override
   Widget build(BuildContext context) {
     final signals = ref.watch(activeSignalsProvider);
+    final appState = ref.watch(crisisProvider);
     
     if (signals.length > _lastCount) {
       _lastCount = signals.length;
@@ -48,6 +49,7 @@ class _SignalFeedPanelState extends ConsumerState<SignalFeedPanel> {
 
     return Column(
       children: [
+        if (appState.currentState != null) _ConfidenceMeterCard(),
         // Summary Header Row
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -238,6 +240,118 @@ class _SignalCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _ConfidenceMeterCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appState = ref.watch(crisisProvider);
+    final state = appState.currentState;
+    if (state == null) return const SizedBox.shrink();
+
+    final fusedSignals = state.agentTraces.agent1.fusedSignals;
+    if (fusedSignals.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(
+        children: fusedSignals.map((fs) => _buildGauge(context, fs)).toList(),
+      ),
+    );
+  }
+
+  Widget _buildGauge(BuildContext context, dynamic fs) {
+    final score = fs.credibilityScore;
+    final isCrisis = score >= 0.60;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: surfaceLight.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: isCrisis ? accentCritical.withOpacity(0.5) : surfaceLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('CONFIDENCE METER: ${fs.location.toUpperCase()}', style: inter(10, weight: FontWeight.w700, color: textSecondary, letterSpacing: 1)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isCrisis ? accentCritical.withOpacity(0.2) : accentWarning.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(isCrisis ? 'ACTIVE' : 'MONITORING', style: inter(9, color: isCrisis ? accentCritical : accentWarning, weight: FontWeight.w700)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    height: 12,
+                    width: width,
+                    decoration: BoxDecoration(
+                      color: surface,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0, end: score),
+                    duration: 1500.ms,
+                    curve: Curves.easeOutCubic,
+                    builder: (context, val, child) {
+                      return Container(
+                        height: 12,
+                        width: width * val,
+                        decoration: BoxDecoration(
+                          color: val >= 0.60 ? accentCritical : accentInfo,
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: val >= 0.60 ? [BoxShadow(color: accentCritical.withOpacity(0.5), blurRadius: 8)] : [],
+                        ),
+                      );
+                    },
+                  ),
+                  Positioned(
+                    left: width * 0.60,
+                    top: -4,
+                    bottom: -4,
+                    child: Container(
+                      width: 2,
+                      decoration: BoxDecoration(
+                        color: score >= 0.60 ? accentCritical : Colors.red.withOpacity(0.5),
+                        boxShadow: score >= 0.60 ? [BoxShadow(color: accentCritical, blurRadius: 4)] : [],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: width * 0.60 - 45,
+                    top: -16,
+                    child: Text('CRISIS THRESHOLD', style: inter(8, color: textSecondary, weight: FontWeight.w600)),
+                  ),
+                  if (score > 0 && score < 0.60)
+                    Positioned(
+                      right: 0,
+                      top: 18,
+                      child: Text('Needs 1 more corroborating source', style: inter(9, color: accentWarning)),
+                    )
+                ],
+              );
+            }
+          ),
+          const SizedBox(height: score > 0 && score < 0.60 ? 20 : 4),
+        ],
+      ),
+    ).animate().fadeIn().slideY(begin: -0.1);
   }
 }
 

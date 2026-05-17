@@ -319,14 +319,31 @@ class _StakeholderChip extends StatelessWidget {
 
 // Modal Details
 
-class _CrisisDetailModal extends StatelessWidget {
+class _CrisisDetailModal extends ConsumerStatefulWidget {
   final Crisis crisis;
   final ResourceAllocation? allocation;
 
   const _CrisisDetailModal({required this.crisis, this.allocation});
 
   @override
+  ConsumerState<_CrisisDetailModal> createState() => _CrisisDetailModalState();
+}
+
+class _CrisisDetailModalState extends ConsumerState<_CrisisDetailModal> {
+  void _showOverrideSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _OverrideCommandSheet(crisis: widget.crisis),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final crisis = widget.crisis;
+    final allocation = widget.allocation;
+    
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
       minChildSize: 0.5,
@@ -349,8 +366,45 @@ class _CrisisDetailModal extends StatelessWidget {
                   child: Container(width: 40, height: 4, decoration: BoxDecoration(color: surfaceLight, borderRadius: BorderRadius.circular(2))),
                 ),
                 const SizedBox(height: 20),
-                Text('CRISIS DETAILS', style: syne(22, color: accentInfo, weight: FontWeight.w700)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('CRISIS DETAILS', style: syne(22, color: accentInfo, weight: FontWeight.w700)),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accentWarning.withOpacity(0.15),
+                        foregroundColor: accentWarning,
+                        side: const BorderSide(color: accentWarning),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      icon: const Icon(Icons.admin_panel_settings_rounded, size: 16),
+                      label: Text('OVERRIDE COMMAND', style: inter(10, weight: FontWeight.w700)),
+                      onPressed: () => _showOverrideSheet(context),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 16),
+                
+                // Feature 3: Nullah Lai Predictive Risk Layer Chip
+                if (crisis.location.toLowerCase().contains('g-10') && crisis.type.toLowerCase().contains('flood')) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blueAccent.withOpacity(0.5)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning_amber_rounded, color: Colors.blueAccent, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text('⚠️ HISTORICAL HIGH-RISK ZONE — 73% flood recurrence when rainfall >50mm/hr.', style: inter(11, color: Colors.blueAccent, weight: FontWeight.w600))),
+                      ],
+                    ),
+                  ).animate().fadeIn().slideX(),
+                ],
                 
                 // Predictive Timeline
                 Text('PREDICTED TIMELINE', style: inter(12, color: textSecondary, weight: FontWeight.w600)),
@@ -734,5 +788,147 @@ class _CascadeChainWidget extends StatelessWidget {
     }
 
     return chip.animate().fadeIn(delay: (index * 100).ms).slideX(begin: 0.1);
+  }
+}
+
+class _OverrideCommandSheet extends ConsumerStatefulWidget {
+  final Crisis crisis;
+  const _OverrideCommandSheet({required this.crisis});
+
+  @override
+  ConsumerState<_OverrideCommandSheet> createState() => _OverrideCommandSheetState();
+}
+
+class _OverrideCommandSheetState extends ConsumerState<_OverrideCommandSheet> {
+  final TextEditingController _rationaleController = TextEditingController();
+  late double _severity;
+  int _ambDelta = 0;
+  int _resDelta = 0;
+  int _polDelta = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _severity = widget.crisis.severity ?? 5.0;
+  }
+
+  @override
+  void dispose() {
+    _rationaleController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_rationaleController.text.trim().isEmpty) return;
+    
+    ref.read(crisisProvider.notifier).submitCommanderOverride(
+      widget.crisis.id, 
+      _rationaleController.text.trim(), 
+      _severity, 
+      _ambDelta, 
+      _resDelta, 
+      _polDelta
+    );
+    
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.admin_panel_settings_rounded, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Override accepted. AI recommendation modified. Rationale logged for audit.', style: inter(13, color: Colors.white, weight: FontWeight.w600))),
+          ],
+        ),
+        backgroundColor: accentWarning,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Widget _buildDeltaBtn(String label, int val, VoidCallback onInc, VoidCallback onDec) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: inter(13, color: textSecondary)),
+        Row(
+          children: [
+            IconButton(icon: const Icon(Icons.remove_circle_outline, color: accentWarning), onPressed: onDec),
+            SizedBox(width: 24, child: Text('${val > 0 ? "+$val" : val}', textAlign: TextAlign.center, style: syne(14, color: textPrimary, weight: FontWeight.w700))),
+            IconButton(icon: const Icon(Icons.add_circle_outline, color: accentWarning), onPressed: onInc),
+          ],
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
+      decoration: BoxDecoration(
+        color: bgPrimary.withOpacity(0.98),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(color: accentWarning.withOpacity(0.5)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.admin_panel_settings_rounded, color: accentWarning),
+              const SizedBox(width: 8),
+              Text('COMMANDER OVERRIDE', style: syne(18, color: accentWarning, weight: FontWeight.w700)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text('Enter commander rationale (required)', style: inter(11, color: textSecondary)),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _rationaleController,
+            style: inter(13, color: textPrimary),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: surfaceLight,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              hintText: 'e.g. Reprioritizing assets due to real-world context...',
+              hintStyle: inter(13, color: textSecondary.withOpacity(0.5)),
+            ),
+            onChanged: (v) => setState(() {}),
+          ),
+          const SizedBox(height: 20),
+          Text('Severity adjustment: AI says ${widget.crisis.severity?.toStringAsFixed(1) ?? "5.0"}, you say: ${_severity.toStringAsFixed(1)}', style: inter(11, color: textSecondary)),
+          Slider(
+            value: _severity,
+            min: 1.0,
+            max: 10.0,
+            divisions: 90,
+            activeColor: accentWarning,
+            onChanged: (v) => setState(() => _severity = v),
+          ),
+          const SizedBox(height: 16),
+          Text('Resource Overrides', style: inter(11, color: textSecondary)),
+          const SizedBox(height: 8),
+          _buildDeltaBtn('Ambulances', _ambDelta, () => setState(() => _ambDelta++), () => setState(() => _ambDelta--)),
+          _buildDeltaBtn('Rescue Teams', _resDelta, () => setState(() => _resDelta++), () => setState(() => _resDelta--)),
+          _buildDeltaBtn('Police Units', _polDelta, () => setState(() => _polDelta++), () => setState(() => _polDelta--)),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accentWarning,
+                foregroundColor: bgPrimary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: _rationaleController.text.trim().isNotEmpty ? _submit : null,
+              child: Text('SUBMIT COMMAND OVERRIDE', style: inter(13, weight: FontWeight.w700)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
