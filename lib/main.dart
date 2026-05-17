@@ -421,9 +421,9 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
             circles: _circles,
             markers: _markers,
             polylines: Set<Polyline>.of(_polylines.values),
-            style: _darkMapStyle,
             onMapCreated: (controller) {
               _mapController = controller;
+              controller.setMapStyle(_darkMapStyle);
             },
           ),
 
@@ -635,13 +635,13 @@ class _PhaseIndicator extends ConsumerWidget {
     final countdownAsync = ref.watch(countdownProvider);
     final seconds = countdownAsync.value ?? 0;
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (seconds > 0) ...[
           _glassCard(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             accent: accentWarning,
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -652,10 +652,10 @@ class _PhaseIndicator extends ConsumerWidget {
               ],
             ),
           ).animate().fadeIn().scale(),
-          const SizedBox(width: 8),
+          const SizedBox(height: 8),
         ],
         _glassCard(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -764,14 +764,18 @@ class _BottomCommandPanel extends ConsumerWidget {
               ),
 
               // Tab Headers
-              Padding(
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _buildTabHeader(0, 'SIGNALS', Icons.sensors_rounded),
+                    const SizedBox(width: 8),
                     _buildTabHeader(1, 'CRISES', Icons.warning_amber_rounded),
+                    const SizedBox(width: 8),
                     _buildTabHeader(2, 'ACTIONS', Icons.flash_on_rounded),
+                    const SizedBox(width: 8),
                     _buildTabHeader(3, 'TRACES', Icons.psychology_rounded),
                   ],
                 ),
