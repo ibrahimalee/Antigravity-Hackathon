@@ -60,6 +60,15 @@ const _locations = {
   'G-9': LatLng(33.6900, 73.0300),
   'PIMS Hospital': LatLng(33.7130, 73.0580),
   'Srinagar Highway': LatLng(33.6850, 73.0150),
+  'Blue Area': LatLng(33.7118, 73.0684),
+  'Centaurus Mall': LatLng(33.7077, 73.0498),
+  'F-6': LatLng(33.7315, 73.0685),
+  'E-11': LatLng(33.7005, 72.9782),
+  'G-11': LatLng(33.6841, 72.9986),
+  'H-8': LatLng(33.6780, 73.0450),
+  'I-9': LatLng(33.6565, 73.0528),
+  'Zero Point': LatLng(33.6923, 73.0649),
+  'Faizabad': LatLng(33.6631, 73.0844),
 };
 
 // ── DARK MAP STYLE ───────────────────────────────────────────────────────────
@@ -207,6 +216,18 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
   }
 
   LatLng _getCoords(String location) {
+    // 1. Try parsing Lat, Lng coordinates directly (e.g. "33.72, 73.06" or "33.72,73.06")
+    final cleanLoc = location.trim();
+    final match = RegExp(r'^\s*([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)\s*$').firstMatch(cleanLoc);
+    if (match != null) {
+      final lat = double.tryParse(match.group(1)!);
+      final lng = double.tryParse(match.group(2)!);
+      if (lat != null && lng != null) {
+        return LatLng(lat, lng);
+      }
+    }
+
+    // 2. Try normalized static lookup
     final normLocation = _normalize(location);
     for (final entry in _locations.entries) {
       final normKey = _normalize(entry.key);
@@ -1349,6 +1370,14 @@ class _InjectCrisisSheet extends StatefulWidget {
 class _InjectCrisisSheetState extends State<_InjectCrisisSheet> {
   String _selectedType = 'FLOOD';
   String _selectedLocation = 'G-10';
+  bool _isCustom = false;
+  final _customLocationController = TextEditingController();
+
+  @override
+  void dispose() {
+    _customLocationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1357,7 +1386,12 @@ class _InjectCrisisSheetState extends State<_InjectCrisisSheet> {
         color: bgSecondary.withOpacity(0.95),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1383,18 +1417,50 @@ class _InjectCrisisSheetState extends State<_InjectCrisisSheet> {
             value: _selectedLocation,
             decoration: const InputDecoration(labelText: 'LOCATION'),
             items: const [
-              DropdownMenuItem(value: 'G-10', child: Text('G-10')),
-              DropdownMenuItem(value: 'G-13', child: Text('G-13')),
-              DropdownMenuItem(value: 'Murree Road', child: Text('Murree Road')),
-              DropdownMenuItem(value: 'F-7', child: Text('F-7')),
-              DropdownMenuItem(value: 'Dhok Hassu', child: Text('Dhok Hassu')),
+              DropdownMenuItem(value: 'G-10', child: Text('G-10 (Sector Centroid)')),
+              DropdownMenuItem(value: 'G-13', child: Text('G-13 (Sector Centroid)')),
+              DropdownMenuItem(value: 'Murree Road', child: Text('Murree Road (Faizabad)')),
+              DropdownMenuItem(value: 'F-7', child: Text('F-7 (Sector Centroid)')),
+              DropdownMenuItem(value: 'Dhok Hassu', child: Text('Dhok Hassu (Rawalpindi)')),
+              DropdownMenuItem(value: 'Blue Area', child: Text('Blue Area (Business District)')),
+              DropdownMenuItem(value: 'Centaurus Mall', child: Text('Centaurus Mall')),
+              DropdownMenuItem(value: 'Zero Point', child: Text('Zero Point Interchange')),
+              DropdownMenuItem(value: 'CUSTOM', child: Text('Custom Sector / Exact Lat, Lng...')),
             ],
-            onChanged: (v) => setState(() => _selectedLocation = v!),
+            onChanged: (v) {
+              setState(() {
+                _selectedLocation = v!;
+                _isCustom = v == 'CUSTOM';
+              });
+            },
           ),
+
+          if (_isCustom) ...[
+            const SizedBox(height: 16),
+            TextField(
+              controller: _customLocationController,
+              style: inter(14, color: textPrimary),
+              decoration: InputDecoration(
+                labelText: 'CUSTOM LOCATION OR COORDINATES',
+                hintText: 'e.g. F-6, E-11, or exact 33.72, 73.06',
+                hintStyle: inter(12, color: textSecondary),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.location_on_rounded, color: accentInfo),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.02),
+              ),
+            ),
+          ],
+          
           const SizedBox(height: 20),
           
           ElevatedButton(
-            onPressed: () => widget.onInject(_selectedType, _selectedLocation),
+            onPressed: () {
+              final loc = _isCustom ? _customLocationController.text.trim() : _selectedLocation;
+              if (loc.isEmpty) return;
+              Navigator.pop(context);
+              widget.onInject(_selectedType, loc);
+            },
             style: ElevatedButton.styleFrom(backgroundColor: accentCritical, padding: const EdgeInsets.symmetric(vertical: 14)),
             child: Text('TRANSMIT SIGNAL TELEMETRY', style: syne(12, weight: FontWeight.w700)),
           ),

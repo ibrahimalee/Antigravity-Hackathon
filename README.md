@@ -36,6 +36,10 @@ CIRO utilizes Antigravity as its core intelligence engine. Antigravity handles:
 CIRO includes an immersive, reactive mapping viewport designed to keep operators fully oriented:
 - **Auto-Focus Engine**: When the multi-agent orchestration pipeline detects a new crisis, the Google Maps camera automatically pans and zooms directly to the epicenter coordinates.
 - **Interactive Pinpointing**: Operators can tap on **any signal card** in the live feed or **any crisis card** in the control panel to instantly center and focus the map camera on that exact geographical point with haptic feedback.
+- **Custom Location & Coordinates Injection**: 
+  - Tapping **INJECT SYNTHETIC CRISIS SIGNAL** allows operators to choose from an expanded list of pre-seeded landmarks (G-10, G-13, F-7, Blue Area, Zero Point, Centaurus Mall, etc.).
+  - Select the **Custom Sector / Exact Lat, Lng...** option to input **any custom location name** (automatically resolved using a robust alphanumeric normalization algorithm) or type **exact decimal coordinates directly (e.g. `33.7253, 73.0451`)**.
+  - The map will automatically parse custom coordinate strings, plot the incident, render the affected radius circle, and pan the tactical camera to that **exact exact spot** without delay!
 - **Concentric Severity Zones**: Visualizes dynamic circular impact overlays (inner critical zones and outer affected areas) color-coded by operational status.
 
 ## Assumptions
