@@ -245,7 +245,7 @@ The communication contract between our Multi-Agent Groq Service and the Flutter 
 
 ## 📍 Islamabad Spatial Baseline & Operational Directory
 
-CIRO contains a built-in coordinates system covering Islamabad's unique grid sector structure and arterial roadways. This allows the system to instantly plot circles, polygons, and markers with absolute geographical precision. During recent updates, coordinate parameters were audited and corrected to reflect true geospatial centroids instead of generic offsets.
+**Nigehbaan AI** contains a built-in coordinates system covering Islamabad's unique grid sector structure and arterial roadways. This allows the system to instantly plot circles, polygons, and markers with absolute geographical precision. During recent updates, coordinate parameters were audited and corrected to reflect true geospatial centroids instead of generic offsets.
 
 ### Geofenced Sector Lookup Catalog
 
@@ -272,13 +272,13 @@ CIRO contains a built-in coordinates system covering Islamabad's unique grid sec
 | **Zero Point** | `33.6923` | `73.0649` | Islamabad's primary central highway interchange |
 
 ### Dynamic Alphanumeric Coordinate Parsing
-CIRO features a highly resilient regex parser that intercepts custom location inputs. If an operator types an exact coordinate pair (e.g., `33.7253, 73.0451` or `33.72,73.06`), CIRO automatically isolates the decimal points and centers the map viewport immediately on those exact coordinates without relying on named static lookups. If a string sector name is typed, the system executes an alphanumeric normalization pass to match it with the nearest known catalog centroid.
+**Nigehbaan AI** features a highly resilient regex parser that intercepts custom location inputs. If an operator types an exact coordinate pair (e.g., `33.7253, 73.0451` or `33.72,73.06`), **Nigehbaan AI** automatically isolates the decimal points and centers the map viewport immediately on those exact coordinates without relying on named static lookups. If a string sector name is typed, the system executes an alphanumeric normalization pass to match it with the nearest known catalog centroid.
 
 ---
 
 ## 🎬 Detailed Simulation Walkthrough: The 4 Phases
 
-CIRO operates a real-time, four-phase chronological crisis simulation, enabling operators to witness complex, agentic decision loops firsthand. 
+**Nigehbaan AI** operates a real-time, four-phase chronological crisis simulation, enabling operators to witness complex, agentic decision loops firsthand. 
 
 ```
                                   CHRONOLOGICAL SIMULATION RUNWAY
@@ -290,10 +290,18 @@ CIRO operates a real-time, four-phase chronological crisis simulation, enabling 
 ```
 
 ### 🏆 The 3 "Golden Moments" to Demo for the Judges
-When presenting this timeline, be sure to highlight these specific interactive beats that prove the platform's depth:
-1. **The Threshold Crossover Pause:** During Phase 1, point to the live confidence gauge. Show the judges how the Murree Road incident is creeping up (reaching `0.575`) but *stops* intentionally below the `0.60` trigger line, proving the AI enforces rigid rules and won't dispatch assets prematurely.
-2. **The Urdu TTS Alert Broadcast:** When Phase 1 triggers, open the Actions panel, scroll to the "Public (UR)" stakeholder message, and tap `BROADCAST ALERT`. The native device speaker will read the generated Urdu Roman warning aloud, demonstrating multi-modal accessibility.
-3. **The Interactive Explainability Demo:** On any generated dispatch action (e.g., "Dispatch 2 ambulances to G-10"), click the `ASK WHY` button. The app will hit the Groq LLM in real-time and return a 20-word contextual justification for that specific tactical decision.
+
+> [!TIP]
+> **When presenting this timeline, be sure to highlight these specific interactive beats that prove the platform's depth:**
+>
+> 1. **🚦 The Threshold Crossover Pause:** 
+>    During Phase 1, point to the live confidence gauge. Show the judges how the Murree Road incident is creeping up (reaching `0.575`) but *stops* intentionally below the `0.60` trigger line, proving the AI enforces rigid rules and won't dispatch assets prematurely.
+>
+> 2. **🔊 The Urdu TTS Alert Broadcast:** 
+>    When Phase 1 triggers, open the Actions panel, scroll to the "Public (UR)" stakeholder message, and tap `BROADCAST ALERT`. The native device speaker will read the generated Urdu Roman warning aloud, demonstrating multi-modal accessibility.
+>
+> 3. **💡 The Interactive Explainability Demo:** 
+>    On any generated dispatch action (e.g., "Dispatch 2 ambulances to G-10"), click the `ASK WHY` button. The app will hit the Groq LLM in real-time and return a 20-word contextual justification for that specific tactical decision.
 
 ### Phase 1: Urban Flood Epicenter in Sector G-10 (T + 0s)
 * **Ingested Signals:**
@@ -361,7 +369,7 @@ When presenting this timeline, be sure to highlight these specific interactive b
 
 ## 🎨 High-Fidelity Tactical UI/UX Upgrades (Tiers 1, 2 & 3)
 
-CIRO features a premium, state-of-the-art visual command interface designed to maximize operational visibility, predict system side effects, and offer immersive localized notifications. These features directly address critical scoring parameters of the hackathon rubric:
+**Nigehbaan AI** features a premium, state-of-the-art visual command interface designed to maximize operational visibility, predict system side effects, and offer immersive localized notifications. These features directly address critical scoring parameters of the hackathon rubric:
 
 ### 📍 Tier 1: Real-Time Spatial Simulations & Impact Analysis
 * **Dynamic Map Mode Layer Selector:**
@@ -381,7 +389,7 @@ CIRO features a premium, state-of-the-art visual command interface designed to m
   * *Ease-Back Collapse:* Retracted circles shrink smoothly to `0.0` over exactly 800ms utilizing a custom `Curves.easeInBack` transition.
 * **Live Before/After Operational Impact Panel:**
   Replacing static metrics cards in the Actions panel is a stateful comparative dashboard:
-  * *Dual-Column Tracking:* Direct comparison between "Before CIRO" (constant red) and "After CIRO" (dynamic green).
+  * *Dual-Column Tracking:* Direct comparison between "Before Nigehbaan AI" (constant red) and "After Nigehbaan AI" (dynamic green).
   * *Reactive Tween Counters:* Triggered by Riverpod simulation phases, response times ($22 \rightarrow 9$ min), false alarm rates ($66\% \rightarrow 9\%$), uncoordinated crises ($2 \rightarrow 0$), and wasted assets ($4 \rightarrow 0$ units) count up/down smoothly via `TweenAnimationBuilder` widgets.
   * *Staggered Fades:* Each row mounts sequentially with a 150ms delay using `flutter_animate` triggers.
 * **Crisis Cascade Chain Visualization:**
@@ -391,7 +399,7 @@ CIRO features a premium, state-of-the-art visual command interface designed to m
 
 ### 🇵🇰 Tier 2: Heavy Innovation & Localized Context
 * **Urdu Text-to-Speech Public Alert:**
-  CIRO implements a native Urdu audio engine to demonstrate stakeholder warning dispatching.
+  **Nigehbaan AI** implements a native Urdu audio engine to demonstrate stakeholder warning dispatching.
   * *TTS Engine Integration:* Powered by `flutter_tts` configured with a native `ur-PK` language profile.
   * *Broadcast Control:* For the "Public (UR)" stakeholder briefing card, a `🔊 BROADCAST ALERT` interactive chip triggers native device speakers to read the Urdu briefing aloud (e.g., *"ہنگامی الرٹ: جی-10 میں سیلاب۔ سری نگر ہائی وے سے گریز کریں۔"*).
 * **Operator Situational Awareness Header Card:**
@@ -423,13 +431,13 @@ CIRO features a premium, state-of-the-art visual command interface designed to m
 
 ## 🛠️ Interactive User Interventions
 
-While the simulation runs autonomously, CIRO includes two manual override triggers that let operators interact with the live engine:
+While the simulation runs autonomously, **Nigehbaan AI** includes two manual override triggers that let operators interact with the live engine:
 
 ### 1. Custom Crisis Injection Engine
 Operators can tap **INJECT SYNTHETIC CRISIS SIGNAL** in the FAB menu.
 * Select an incident type (e.g., FLOOD, ACCIDENT, POWER_FAILURE) and location.
 * Operators can type a custom landmark or input **exact decimal coordinates directly (e.g., `33.7253, 73.0451`)**.
-* CIRO's **alphanumeric normalization algorithm** automatically parses coordinate pairs. The map immediately centers, renders a custom radius circle, and invokes the Groq pipeline to generate an immediate, real-time agentic response to the injected event!
+* **Nigehbaan AI**'s **alphanumeric normalization algorithm** automatically parses coordinate pairs. The map immediately centers, renders a custom radius circle, and invokes the Groq pipeline to generate an immediate, real-time agentic response to the injected event!
 
 ### 2. Field Verification Portal
 Operators can tap **FIELD VERIFICATION PORTAL** to simulate dispatcher overrides.
@@ -440,9 +448,9 @@ Operators can tap **FIELD VERIFICATION PORTAL** to simulate dispatcher overrides
 
 ## ⚖️ Empirical Baseline Comparison
 
-A primary benchmark of the CIRO platform is its comparison against a standard non-agentic emergency alert system. The table below represents the qualitative and quantitative differences validated during testing:
+A primary benchmark of the **Nigehbaan AI** platform is its comparison against a standard non-agentic emergency alert system. The table below represents the qualitative and quantitative differences validated during testing:
 
-| Operational Metric | Rule-Based Keyword Match (Baseline) | CIRO Agentic Pipeline (Our System) |
+| Operational Metric | Rule-Based Keyword Match (Baseline) | Nigehbaan AI Agentic Pipeline (Our System) |
 | :--- | :--- | :--- |
 | **Ingestion Paradigm** | Basic substring match (e.g., flags "pani" or "accident"). | Deep context parsing in English and Roman Urdu. |
 | **Credibility Processing** | None. Treats every anonymous tweet as a high-priority emergency. | Multi-channel corroborated signal fusion ($C_{\text{final}}$ formula). |
@@ -456,7 +464,7 @@ A primary benchmark of the CIRO platform is its comparison against a standard no
 
 ## 📈 Costs, Latency & Scalability
 
-CIRO is optimized for high-efficiency enterprise deployment, maintaining low operational overhead and reliable execution timelines.
+**Nigehbaan AI** is optimized for high-efficiency enterprise deployment, maintaining low operational overhead and reliable execution timelines.
 
 ### Cost & Latency Table (per 3-Agent Cycle)
 
@@ -477,52 +485,53 @@ CIRO is optimized for high-efficiency enterprise deployment, maintaining low ope
 ## 📂 Codebase Directory Map
 
 ```
-d:\Hackathons\Antigravity Hackathon
- ├── assets/
- │    ├── ciro_state_initial.json       # Initial baseline state mock
- │    ├── ciro_state_second_crisis.json # Phase 2 state model validation JSON
- │    ├── ciro_state_field_report.json  # Phase 3 retraction validation JSON
- │    └── ciro_state_api_failure.json   # Phase 4 degraded fallback validation JSON
- ├── lib/
- │    ├── models/
- │    │    └── crisis_state.dart        # Strongly-typed data models & custom deserializers
- │    ├── providers/
- │    │    └── crisis_provider.dart     # Riverpod StateNotifiers orchestrating simulation state
- │    ├── services/
- │    │    ├── api_keys.dart            # Local key registry (ignored from VC)
- │    │    ├── api_keys.dart.example    # Registry template file
- │    │    └── groq_service.dart        # Core LLM prompt structures, rotator and parser
- │    ├── ui/
- │    │    ├── panels/
- │    │    │    ├── actions_panel.dart  # Operational dispatches, resources pool & timeline
- │    │    │    ├── crises_panel.dart   # Threat count cards, severity dials & details modal
- │    │    │    ├── signals_panel.dart  # Chronological signal cards & credibility ratings
- │    │    │    └── traces_panel.dart   # Explainable Agent Traces console
- │    │    ├── design_system.dart       # Modern UI GlassCards, custom text themes & colors
- │    │    └── top_bar.dart             # Custom top panel with live clock
- │    └── main.dart                     # App entry point, Google Maps layers & screen setup
- ├── test/
- │    └── widget_test.dart              # Automated baseline tests
- ├── pubspec.yaml                       # External packages and asset bundle assets
- └── README.md                          # Comprehensive documentation catalog (This file)
+nigehbaan_ai/ (Project Root)
+ ├── 📁 assets/
+ │    ├── 📄 ciro_state_initial.json       # Initial baseline state mock
+ │    ├── 📄 ciro_state_second_crisis.json # Phase 2 state model validation JSON
+ │    ├── 📄 ciro_state_field_report.json  # Phase 3 retraction validation JSON
+ │    ├── 📄 ciro_state_api_failure.json   # Phase 4 degraded fallback validation JSON
+ │    └── 📁 screenshots/                  # High-Resolution platform gallery
+ ├── 📁 lib/
+ │    ├── 📁 models/
+ │    │    └── 📄 crisis_state.dart        # Strongly-typed data models & custom deserializers
+ │    ├── 📁 providers/
+ │    │    └── 📄 crisis_provider.dart     # Riverpod StateNotifiers orchestrating simulation state
+ │    ├── 📁 services/
+ │    │    ├── 📄 api_keys.dart            # Local key registry (ignored from VC)
+ │    │    ├── 📄 api_keys.dart.example    # Registry template file
+ │    │    └── 📄 groq_service.dart        # Core LLM prompt structures, rotator and parser
+ │    ├── 📁 ui/
+ │    │    ├── 📁 panels/
+ │    │    │    ├── 📄 actions_panel.dart  # Operational dispatches, resources pool & timeline
+ │    │    │    ├── 📄 crises_panel.dart   # Threat count cards, severity dials & details modal
+ │    │    │    ├── 📄 signals_panel.dart  # Chronological signal cards & credibility ratings
+ │    │    │    └── 📄 traces_panel.dart   # Explainable Agent Traces console
+ │    │    ├── 📄 design_system.dart       # Modern UI GlassCards, custom text themes & colors
+ │    │    └── 📄 top_bar.dart             # Custom top panel with live clock
+ │    └── 📄 main.dart                     # App entry point, Google Maps layers & screen setup
+ ├── 📁 test/
+ │    └── 📄 widget_test.dart              # Automated baseline tests
+ ├── 📄 pubspec.yaml                       # External packages and asset bundle assets
+ └── 📄 README.md                          # Comprehensive documentation catalog (This file)
 ```
 
 ---
 
 ## 🛠️ Step-by-Step Local Setup & Developer Guide
 
-Follow these steps to run the CIRO command center in your local developer environment:
+Follow these steps to run the Nigehbaan AI command center in your local developer environment:
 
-### Prerequisites
+### 📋 Prerequisites
 * [Flutter SDK](https://docs.flutter.dev/get-started/install) installed (v3.0.0 or higher recommended).
 * An active [Groq API Key](https://console.groq.com).
 * An active Google Maps SDK API key.
 
-### Installation
+### 📥 Installation
 
 1. **Clone & Open Project:**
    ```bash
-   cd "d:\Hackathons\Antigravity Hackathon"
+   cd nigehbaan-ai
    ```
 
 2. **Install Dependencies:**
