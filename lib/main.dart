@@ -20,9 +20,6 @@ import 'services/groq_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  if (defaultTargetPlatform == TargetPlatform.android) {
-    AndroidGoogleMapsFlutter.useAndroidViewSurface = true;
-  }
   runApp(const ProviderScope(child: NigehbaanApp()));
 }
 
