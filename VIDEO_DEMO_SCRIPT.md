@@ -1,121 +1,129 @@
-# 🎬 Nigehbaan AI — 4-5 Minute Video Demo Script & Presentation Guide
+# 🎬 Nigehbaan AI — Comprehensive 4-5 Minute Video Demo Script & UI Guide
 
-This guide provides a professional, second-by-second walkthrough script for your hackathon submission video. It aligns your spoken words with precise on-screen actions to guarantee you hit all **4 Golden Moments** and highlight the advanced engineering behind the platform.
+This is the ultimate, second-by-second presentation script for your hackathon video. It incorporates **every single feature, engineering fail-safe, and visual detail** you built into Nigehbaan AI (نگہبان), structured chronologically so you do not miss a single point.
 
 ---
 
-## ⏱️ Video Timeline at a Glance
+## ⏱️ Interactive Timeline & Presentation Flow
 
 ```
-  0:00 ─── 0:40 ─── 1:30 ───────────────── 2:30 ───────────── 3:30 ───────────── 4:30
-    │       │         │                      │                  │                  │
-    ▼       ▼         ▼                      ▼                  ▼                  ▼
-  Intro   Phase 1   Phase 2               Phase 3            Phase 4           Conclusion
-  & UI    G-10      Murree Rd             Nullah Lai         Degraded Fallback & Tech Stack
-  Setup   Flood     & "Ask Why"           Retraction         & "What-If"       Wrap-Up
+  0:00 ───────────────── 1:15 ───────────────── 2:15 ───────────────── 3:15 ───────────────── 4:30
+   │                      │                      │                      │                      │
+   ▼                      ▼                      ▼                      ▼                      ▼
+ [ACT I: SETUP]        [ACT II: PHASE 1]      [ACT III: PHASE 2]     [ACT IV: PHASE 3]      [ACT V: RESILIENCY]
+ • Sleek Splash        • Roman Urdu Feed      • Murree Rd Accident   • Nullah Lai Polygon   • Weather API Decay
+ • Notification Init   • Escalation Gauge     • Resource Contention  • Flood Retraction     • What-If Sandbox
+ • Clean Map Tiles     • Urdu TTS Broadcast   • real-time "Ask Why"  • Vehicle U-Turns      • Rotator / Fallback
+ • Dynamic Top Bar     • Interactive Pause    • Shimmer Loaders      • Historical Recurr.   • Git Logs Proof
 ```
 
 ---
 
-## 🎤 Act I: The Hook & Interface Setup (0:00 – 0:40)
+## 🎤 Act I: The Hook, Splashes, & Interface Layout (0:00 – 0:45)
 
 ### 📱 On-Screen Actions
-1. Show the phone screen displaying the **Nigehbaan AI** preloader animation (the sleek glassmorphic loader).
-2. Transition to the main dashboard. Point to the running simulation clock (Top Bar) and the live network status header (`🔴 0 ACTIVE`, `⚡ 0% DEPLOYED`, `🎯 0.00 CONFIDENCE`).
-3. Tilt the phone slightly to show the high-contrast dark mode and custom Google Map centered over Islamabad.
+1. **App Launch:** Hold the physical Pixel 7 in hand and launch the app. Point out the glowing **glassmorphic preloader screen** with the pulsating cyan logo and smooth 800ms fade-in transition.
+2. **Dashboard Overview:** Point to the **Top Bar** showing the ticking clock, the dynamic simulation status chips (`🔴 0 ACTIVE`, `⚡ 0% DEPLOYED`, `🎯 0.00 CONFIDENCE`), and the pre-loaded geocentric Google Map centered on Islamabad.
+3. **Map Experience:** Pan/tilt the screen slightly to showcase the premium custom **high-contrast dark mode map theme** and point out the clean, native composition that runs at a solid 60 FPS (due to disabled view surface compositing for Tensor-core stability).
 
 ### 🗣️ Spoken Script
-> *"Hello judges, welcome to Nigehbaan AI—the next-generation, high-fidelity emergency command center custom-built for Islamabad, Pakistan.*
->
-> *In emergency dispatch and public safety, operators are inundated with noisy, unstructured, and localized reports (such as social media posts in Roman Urdu, telemetry alerts, and conflicting sensor readings). Standard rule-based dispatch systems fail here—either triggering city-wide panics on unverified keywords, or suffering from 'alert fatigue' and resource exhaustion during multi-incident spikes.*
+> *"Hello judges, welcome to the official walkthrough of **Nigehbaan AI (نگہبان)**—the Crisis Intelligence & Response Orchestrator custom-built for Islamabad, Pakistan. 
 > 
-> *Nigehbaan AI solves this by introducing a three-agent autonomous orchestration pipeline powered by Groq's high-speed Llama-3.3-70B engine. Let’s start the live simulation and watch it ingest and coordinate real-time telemetry."*
+> *Emergency dispatch rooms face extreme cognitive overload: chaotic social media feeds in Roman Urdu, telemetry spikes, and noisy reports. Nigehbaan AI utilizes a high-performance **three-agent autonomous AI pipeline** running on Groq's Llama-3.3-70B model to parse, verify, optimize, and explain crisis events in real time.
+> 
+> *Our launch initializes native local notifications and drops us into a sleek, high-contrast dark dashboard. Our custom-themed map engine is optimized for Android Tensor chips, delivering a butter-smooth 60 frames per second. Let's initiate the simulation."*
 
 ---
 
-## ⚡ Act II: Phase 1 — The Flood Epicenter & Urdu TTS (0:40 – 1:30)
+## ⚡ Act II: Phase 1 — Urban Flood, Confidence Escalation, & Urdu TTS (0:45 – 1:45)
 
 ### 📱 On-Screen Actions
-1. **Tap the `START SIMULATION` button.** 
-2. Point to the **Signals Tab** as 4 telemetry logs instantly populate (3 Roman Urdu posts and 1 Weather API stream).
-3. **[Golden Moment #1 - Part 1]:** Direct attention to the **Live Confidence Escalation Meter** (`ConfidenceGaugCard`) at the top of the Signals panel. Watch the needle climb as signals corroborate. The moment the needle crosses **0.60**, show the card's visual glow (and mention the physical haptic feedback).
-4. Point to the map where a bright red breathing circle appears over **Sector G-10** and ambulances/police cars start traveling along the roads from Zero Point.
-5. **[Golden Moment #2 - Urdu TTS Broadcast]:** Switch to the **Actions Tab**, scroll down to the **Public (UR)** stakeholder briefing card, and **tap the `🔊 BROADCAST ALERT` chip**. Make sure your phone's volume is up so the judges hear the native Urdu text-to-speech speak aloud.
+1. **Tap the `START SIMULATION` button.**
+2. Switch to the **Signals Tab**. Point to the 4 incoming streams popping in (3 Roman Urdu posts and 1 Weather Sensor stream showing 68mm/hr rainfall).
+3. **[Golden Moment #1 - Part 1: Confidence Gauge]:** Zoom in on the **Confidence Escalation Meter** (`ConfidenceGaugCard`) at the top of the signals panel. Watch the needle climb as signals corroborate. The moment it hits **0.60**, mention that the phone just fired a heavy physical haptic rumble (`HapticFeedback.heavyImpact()`), the status jumps to `ACTIVE`, and a bright red circle overlay breathes on **Sector G-10**.
+4. **[NEW Play/Pause Control Demo]:** **Tap the newly-built Pause button** (the yellow pause circle) next to `Next assessment in: 12s` on the dashboard. Show the timer freeze!
+5. **[Golden Moment #2: Urdu TTS Broadcast]:** Switch to the **Actions Tab**, scroll down to the dedicated cyan card **"STAKEHOLDER BRIEFINGS (UR)"**, and tap **`🔊 BROADCAST ALERT`**. Turn up the phone speaker so judges hear the native Urdu text-to-speech voice read the Roman Urdu message aloud.
 
 ### 🗣️ Spoken Script
-> *"We’ve started the simulation. Instantly, our Signal Fusion Agent ingests Roman Urdu posts like 'G-10 mein pani bhar gaya hai' alongside weather API alerts.*
+> *"We tap 'Start Simulation'. Instantly, the Signal Fusion Agent ingests raw urban signals. We see weather readings alongside Roman Urdu distress messages like 'G-10 mein pani bhar gaya hai'. 
 > 
-> *(Point to Gauge)* *Watch our live Confidence Escalation Meter. As these signals corroborate, the system fuses their credibility. The second it crosses our rigid 0.60 safety threshold, a heavy haptic pulse fires on the device, the event escalates to ACTIVE status, and the map dynamically spawns emergency resources.*
+> *Watch our live **Confidence Escalation Meter**. Instead of triggering panic on single keywords, the agent fuses signal credibility in real time. The moment the confidence crosses our rigid **0.60 safety threshold**, a heavy haptic pulse shakes the device, the incident status turns to red `ACTIVE`, and a pulsating flood zone spawns in Sector G-10. 
 > 
-> *Look at the map—our assets don’t just hover; they travel along Islamabad's actual road networks. Now, watch Nigehbaan’s multi-modal accessibility in action:* *(Tap TTS Button)* *We tap 'Broadcast Alert', and the device reads the generated Roman Urdu stakeholder briefing aloud in native Urdu.*
+> *To show you our absolute operational control, I can tap our newly-implemented **Simulation Pause Button** (Tap Pause) to freeze the countdown timer. This allows dispatch operators to inspect active systems without rushing!
 > 
-> *[Pause to let TTS voice speak: 'ہنگامی الرٹ: جی-10 میں سیلاب۔ سری نگر ہائی وے سے گریز کریں۔']*
+> *Let's look at Nigehbaan's multi-modal accessibility: in our Actions panel, we have a double-mounted **Urdu TTS Broadcast Card**.* *(Tap Broadcast)* *When tapped, the native device speaks the Roman Urdu warning aloud in native Urdu.*
 > 
-> *This ensures crucial public warnings reach everyone instantly, regardless of literacy."*
+> *[Pause for TTS output: 'ہنگامی الرٹ: جی-10 میں سیلاب۔ سری نگر ہائی وے سے گریز کریں۔']*
+> 
+> *This ensures critical warnings bypass language and literacy barriers instantly."*
 
 ---
 
-## 🚦 Act III: Phase 2 — The Dual Threshold & Explainability (1:30 – 2:30)
+## 🚦 Act III: Phase 2 — Multi-Crisis Collision & Interactive Explainability (1:45 – 2:45)
 
 ### 📱 On-Screen Actions
-1. As the timer reaches **T + 12s**, the simulation automatically transitions into **Phase 2**.
-2. **[Golden Moment #1 - Part 2]:** Point to the map where a yellow monitoring marker appears at **Murree Road**. Point back to the Confidence Escalation Meter and show the judges how the Murree Road incident crosses the threshold independently at **0.72 confidence**, triggering a second active crisis.
-3. Switch back to the **Actions Tab**. 
-4. **[Golden Moment #3 - Interactive Explainability]:** Locate the active dispatch action card ("Dispatch 1 Standby Ambulance to Murree Road") and **tap the `💡 ASK WHY` button**. Show the smooth loading shimmer, and point to the 20-word contextual explanation that pops up.
+1. **Tap the Play button** to resume the countdown. Let it count down to `0s` and automatically transition to **Phase 2**.
+2. **Map Routing Demonstration:** Look at the map. Point out that emergency vehicles (ambulances/police) are not flying in straight lines; they are moving along Srinagar Highway and Murree Road towards G-10.
+3. **[Golden Moment #1 - Part 2: Dual Thresholds]:** Point to the map where a yellow warning circle appears at **Faizabad / Murree Road**. Point to the gauge and show it climbing to **0.72 confidence**, activating a second crisis concurrently.
+4. **[Golden Moment #3: Ask Why Explainability]:** Switch to the **Actions Tab**. Tap the **`💡 ASK WHY`** button on the Murree Road dispatch action card. Show the 1.5-second glassmorphic shimmer loader, followed by the concise, context-aware 20-word explanation that pops up.
 
 ### 🗣️ Spoken Script
-> *"At T plus 12 seconds, Phase 2 triggers. Our system is now managing a second, independent event—a road accident on Murree Road.*
+> *"I tap Play to resume the countdown. As Phase 2 loads, watch the map. Our dispatched ambulances and rescue teams do not take straight-line shortcuts—they actively navigate along Islamabad's Srinagar Highway, tracing real roads.
 > 
-> *(Point to gauge)* *Watch the meter again. While G-10 remains active, the Murree Road incident independently scales its confidence to 0.72, proving Nigehbaan AI can manage multiple escalating incidents simultaneously without dropping its rigorous evidence standard.*
+> *Suddenly, a second crisis collides. A major pileup is reported near Faizabad on Murree Road.* *(Point to Gauge)* *Watch our escalation meter track it independently, crossing the threshold at 0.72 confidence. Nigehbaan is now managing two active, competing crises.
 > 
-> *But in critical command centers, AI must never be a black box. If I scroll to the dispatched assets on Murree Road and tap 'Ask Why'—* *(Tap Ask Why)* *—the app hits our Groq model in real time to fetch a concise, 20-word tactical reasoning for this exact dispatch.*
+> *Look at the resource optimization. The Response Agent automatically calculated a critical trade-off, shifting an ambulance from G-10 to Murree Road to save lives. 
 > 
-> *It reads: 'Ambulance dispatched due to confirmed trauma telemetry and severe transit blockages on Murree Road.' This gives commanders absolute, auditable clarity."*
+> *But emergency AI cannot be a black box. If we scroll to the action card and tap **'Ask Why'**, a live glassmorphic shimmer loader contacts our Groq Llama-3.3 model in real time to fetch a concise, 20-word tactical reasoning for this exact dispatch.*
+> 
+> *It explains:* 'Ambulance dispatched due to confirmed trauma telemetry and severe transit blockages on Murree Road.' *This ensures every machine decision is 100% human-auditable."*
 
 ---
 
-## 🗺️ Act IV: Phase 3 — Hydrology Layer & Resolution (2:30 – 3:30)
+## 🗺️ Act IV: Phase 3 — geofenced Nullah Lai Corridor & Retraction (2:45 – 3:45)
 
 ### 📱 On-Screen Actions
-1. At **T + 24s**, the simulation enters **Phase 3** (G-10 flood water retracts, but Murree Road accident remains active).
-2. Point to the map and show the bright red circle over G-10 collapsing and turning into a soft, secure green checkmark. Show the emergency dispatch vehicles turning around and driving back to base.
-3. **[Golden Moment #4 - Nullah Lai Recognition]:** Zoom in slightly on the map and point to the glowing blue corridor running from Rawalpindi up through G-10.
-4. Show the detailed crisis sheet automatically appending the historical recurrence risk metrics warning.
+1. Let the simulation timer count down to **Phase 3** (G-10 flood water retracts, but Murree Road remains active).
+2. **Map Retraction & Asset U-Turns:** Point to G-10 on the map. The red breathing circle collapses and turns into a soft, secure green checkmark. Point to the dispatched G-10 vehicles on Srinagar Highway physically making U-turns and returning to the Zero Point base.
+3. **[Golden Moment #4: Nullah Lai Polygon Overlay]:** Point to the bright cyan polygon tracing the actual hydrology of the Nullah Lai corridor. Explain how it brightened dynamically.
+4. Point to the active G-10 card to show the historical recurrence risk warning that was dynamically appended.
 
 ### 🗣️ Spoken Script
-> *"At T plus 24 seconds, the G-10 flood telemetry decays, triggering a crisis retraction.*
+> *"Now we enter Phase 3—the false alarm retraction. A field verification report reveals that the G-10 flooding was actually a minor water main burst, not a natural disaster. 
 > 
-> *Notice how the red map circle collapses and turns into a secure green checkmark, while the response teams turn around and drive back to Zero Point base. But here is the most powerful authenticity feature: Nullah Lai.*
+> *Watch the UI react instantly. The G-10 flood marker collapses into a secure green checkmark. Crucially, the dispatched response vehicles on the map dynamically execute U-turns to head back to base, freeing up vital city assets!
 > 
-> *Islamabad is defined by its hydrology. Nigehbaan AI features a geofenced Nullah Lai Flood Risk Layer. When a flood is active in G-10, this corridor brightens from 6% to 18% opacity, and the system automatically appends historical risk data—alerting commanders to a 73% historical recurrence whenever rainfall exceeds 50mm per hour.*
+> *But look at the map itself. We have mapped the actual geofenced coordinates of the **Nullah Lai Hydrology Corridor**. Because a flood warning was triggered, this cyan polygon automatically brightened from 6% to 18% opacity.*
 > 
-> *Nigehbaan doesn't just parse text; it understands the physical city itself."*
+> *Simultaneously, the system appends a historical alert inside the details sheet, warning commanders of a 73% flood recurrence history whenever rainfall exceeds 50mm/hour. Nigehbaan does not just read coordinates—it deeply understands Islamabad’s topography."*
 
 ---
 
-## 🛠️ Act V: Phase 4 — Degraded Mode, What-If Sandbox & Stack (3:30 – 4:30)
+## 🛠️ Act V: Phase 4 — Resiliency, What-If Strategic Sandbox, & Technical Stack (3:45 – 5:00)
 
 ### 📱 On-Screen Actions
-1. Point to the top-right indicator showing `DEGRADED MODE` active as the Weather API decays.
-2. Switch to the **Actions Tab**, scroll down to the **What-If Scenario Sandbox** panel.
-3. **Tap one of the scenario buttons** (e.g., `-1 Ambulance` or `+Road Closure`). Show the glassmorphic shimmer loader animating for 1.5 seconds.
-4. Show the final screen, showing the **Antigravity Journal** in the README on your laptop behind the phone.
+1. Let the simulation timer trigger **Phase 4** (Weather sensor API goes offline, system status displays `⚠️ DEGRADED` in yellow).
+2. **Robust Fallbacks & Key Rotator:** Explain that the Weather API failed, but the deserializer did not crash, falling back to cached rain parameters. Mention the **Groq API Key Rotator** sequential retry model on HTTP 429 errors.
+3. **What-If Strategic Sandbox Demo:** Go to the Actions tab, scroll to the **"WHAT-IF SCENARIO PLANNER"** sandbox card. Tap the **`-1 Ambulance`** button. Show the 1.5s live shimmer loader. Show the resulting local offline fallback telemetry delta warning (G-10 latency +7 min).
+4. **Conclusion:** Zoom out to show your laptop, showcasing the **README** and the authentic development journal logs inside the `antigravity_artifacts/` directory.
 
 ### 🗣️ Spoken Script
-> *"In Phase 4, the primary Weather API fails. Nigehbaan’s health monitor immediately displays a Degraded Warning banner. Rather than crashing, the deserializers cast type-safe fallback values to keep the dashboard 100% online.*
+> *"In Phase 4, our primary Weather API goes offline. Nigehbaan's health monitor instantly displays a yellow 'Degraded Mode' warning. Rather than crashing, our robust, null-safe deserialization architecture intercepts the failure, casts type-safe defaults, and uses cached telemetry to keep the app online.
 > 
-> *Furthermore, operators can open the 'What-If Strategic Sandbox' to model transit bottlenecks. If I tap '-1 Ambulance'—* *(Tap button)* *—a 1.5-second shimmer loader models the impact. The system routes predictions through our Groq Llama-3.3 rotator, falling back gracefully to pre-computed scenario deltas if Groq times out.*
+> *If Groq's API encounters rate limits or key blockages, Nigehbaan's custom **Groq Key Rotator** cycles keys automatically. And if the device is completely offline, our local backup engine takes over seamlessly.
 > 
-> *Under the hood, Nigehbaan is powered by Flutter and Riverpod. Decoupling the high-frequency map animations into a 50ms periodic timer keeps the UI thread running at a butter-smooth 60 frames per second, even on older devices.*
+> *Let's test the **What-If Strategic Sandbox**.* *(Tap -1 Ambulance)* *Tapping this simulates resource constraints. A shimmer loader runs, and our offline fallback telemetry delta warns us that withdrawing an ambulance will increase G-10 arrival latency by exactly 7 minutes. This gives commanders pre-calculated sandbox foresight under any circumstances!
 > 
-> *Everything we built—from the null-safe JSON factories to the haptic-integrated gauges—was pair-programmed directly inside the Antigravity IDE. Our full development logs, plans, and task lists are fully preserved in the 'antigravity_artifacts' folder in our repository.*
+> *Nigehbaan AI was engineered from the ground up inside the Antigravity pair-programming workspace. By decoupling heavy map polylines into a 50ms periodic timer, we separate UI thread animations from core state processing, maintaining an unbroken 60 frames per second. 
 > 
-> *Nigehbaan AI doesn't just respond to crises. It understands, predicts, and resolves them. Thank you, judges."*
+> *All our development plans, step-by-step tasks, and 15 interactive walkthroughs are fully preserved in the 'antigravity_artifacts' directory of our Git repository, proving complete engineering authenticity.
+> 
+> *Nigehbaan AI doesn't just display emergency signals. It understands them, models them, and keeps Islamabad safe. Thank you, judges."*
 
 ---
 
 ## 💡 Pro-Tips for a Winning Video Delivery
 
-* **Haptics Reference:** When you discuss the 0.60 threshold in Phase 1, mention: *"Judges, right at this moment, the phone in my hand vibrated with a heavy physical haptic feedback, matching the visual transition of the command meter."* This highlights physical device integration.
-* **Volume Check:** Double-check your Android device's media volume before recording so the Roman Urdu Text-to-Speech alert reads loud and clear!
-* **Steady Camera:** Keep the camera steady on the phone. Zoom in slightly when showing the **Confidence Escalation Meter** and the **Ask Why** explainability card.
+* **Keep volume high:** Make sure the TTS Roman Urdu audio broadcast plays clearly so the camera microphone catches the speech synthesis!
+* **Pace yourself:** Use the newly built **Simulation Pause Button** at the start of each phase. This removes any rush and lets you comfortably explain every complex feature.
+* **Camera angles:** When you tap `💡 ASK WHY` or `-1 Ambulance`, zoom in close to the screen to capture the clean glassmorphic shimmer loader animation.
