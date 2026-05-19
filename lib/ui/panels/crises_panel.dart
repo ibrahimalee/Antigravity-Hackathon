@@ -538,13 +538,31 @@ class _StakeholderMessageCardState extends State<_StakeholderMessageCard> {
   final FlutterTts _tts = FlutterTts();
   bool _isPlaying = false;
 
-  Future<void> _speak() async {
-    setState(() => _isPlaying = true);
-    await _tts.setLanguage('ur-PK');
-    await _tts.speak(widget.body);
+  @override
+  void initState() {
+    super.initState();
     _tts.setCompletionHandler(() {
       if (mounted) setState(() => _isPlaying = false);
     });
+    _tts.setErrorHandler((msg) {
+      if (mounted) setState(() => _isPlaying = false);
+      debugPrint('TTS Error: $msg');
+    });
+  }
+
+  @override
+  void dispose() {
+    _tts.stop();
+    super.dispose();
+  }
+
+  Future<void> _speak() async {
+    if (_isPlaying) return;
+    setState(() => _isPlaying = true);
+    
+    // Attempt to set Urdu, but do not block if unsupported
+    await _tts.setLanguage('ur-PK');
+    await _tts.speak(widget.body);
   }
 
   @override
