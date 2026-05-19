@@ -570,6 +570,74 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
     );
   }
 
+  static const Map<String, List<LatLng>> _predefinedRoutes = {
+    'route_g10': [
+      LatLng(33.7097, 73.0588), // PIMS HQ
+      LatLng(33.6970, 73.0550), // Jinnah Ave down
+      LatLng(33.6923, 73.0649), // Zero Point
+      LatLng(33.6880, 73.0450), // Srinagar Hwy
+      LatLng(33.6850, 73.0330), // Srinagar Hwy
+      LatLng(33.6830, 73.0230), // Srinagar Hwy / G-10 turn
+      LatLng(33.6938, 73.0229), // G-10
+    ],
+    'route_murree': [
+      LatLng(33.7097, 73.0588), // PIMS HQ
+      LatLng(33.6923, 73.0649), // Zero Point
+      LatLng(33.6800, 73.0780), // I-8 Interchange
+      LatLng(33.6786, 73.0951), // Faizabad / Murree
+    ]
+  };
+
+  LatLng _getPointAlongRoute(LatLng start, LatLng end, double progress) {
+    List<LatLng>? route;
+    
+    // Simple heuristic to snap to predefined routes
+    final endStr = end.latitude.toStringAsFixed(3) + end.longitude.toStringAsFixed(3);
+    final g10End = _locations['G-10']!;
+    final murreeEnd = _locations['Murree Road']!;
+    
+    if (endStr == g10End.latitude.toStringAsFixed(3) + g10End.longitude.toStringAsFixed(3)) {
+      route = _predefinedRoutes['route_g10'];
+    } else if (endStr == murreeEnd.latitude.toStringAsFixed(3) + murreeEnd.longitude.toStringAsFixed(3)) {
+      route = _predefinedRoutes['route_murree'];
+    }
+
+    if (route == null) {
+      // Fallback: straight air-line interpolation
+      return LatLng(
+        start.latitude + (end.latitude - start.latitude) * progress,
+        start.longitude + (end.longitude - start.longitude) * progress,
+      );
+    }
+
+    // Polyline Interpolation Logic
+    double totalDist = 0.0;
+    List<double> segDists = [];
+    for (int i = 0; i < route.length - 1; i++) {
+      double dLat = route[i + 1].latitude - route[i].latitude;
+      double dLng = route[i + 1].longitude - route[i].longitude;
+      double dist = sqrt(dLat * dLat + dLng * dLng);
+      segDists.add(dist);
+      totalDist += dist;
+    }
+
+    double targetDist = totalDist * progress;
+    double currentDist = 0.0;
+
+    for (int i = 0; i < segDists.length; i++) {
+      if (currentDist + segDists[i] >= targetDist || i == segDists.length - 1) {
+        double segProg = (targetDist - currentDist) / segDists[i];
+        if (segProg.isNaN || segProg.isInfinite) segProg = 1.0;
+        return LatLng(
+          route[i].latitude + (route[i + 1].latitude - route[i].latitude) * segProg,
+          route[i].longitude + (route[i + 1].longitude - route[i].longitude) * segProg,
+        );
+      }
+      currentDist += segDists[i];
+    }
+    return end;
+  }
+
   void _updateMapLayers(CrisisAppState appState) {
     _circles.clear();
     _markers.clear();
@@ -656,8 +724,9 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
       final progress = _dispatchProgress[crisis.id];
       if (progress != null && progress > 0.0) {
         final baseCoords = _getBaseCoords(crisis.location);
-        final currentLat = baseCoords.latitude + (coords.latitude - baseCoords.latitude) * progress;
-        final currentLng = baseCoords.longitude + (coords.longitude - baseCoords.longitude) * progress;
+        final currentPos = _getPointAlongRoute(baseCoords, coords, progress);
+        final currentLat = currentPos.latitude;
+        final currentLng = currentPos.longitude;
         
         final alloc = currentState.agentTraces.agent3.allocations.where((a) => a.crisisId == crisis.id).firstOrNull;
         if (alloc != null) {
