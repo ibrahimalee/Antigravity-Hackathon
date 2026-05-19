@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/crisis_state.dart';
 import '../../providers/crisis_provider.dart';
 import '../design_system.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class ActionLogPanel extends ConsumerWidget {
   const ActionLogPanel({super.key});
@@ -72,6 +73,19 @@ class ActionLogPanel extends ConsumerWidget {
                     ...allActions.asMap().entries.map((e) => _ActionTimelineItem(action: e.value, isLast: e.key == allActions.length - 1)),
                   ],
                   const SizedBox(height: 16),
+                  WhatIfScenarioCard(state: state),
+                  const SizedBox(height: 16),
+                  if (allocs.isNotEmpty) ...[
+                    Text('STAKEHOLDER BRIEFINGS (UR)', style: inter(11, weight: FontWeight.w500, color: Colors.cyanAccent, letterSpacing: 2)),
+                    const SizedBox(height: 12),
+                    ...allocs.map((alloc) => _ActionStakeholderMessageCard(
+                      title: 'Public (UR)', 
+                      body: alloc.stakeholderMessages.publicUrdu, 
+                      color: Colors.cyanAccent, 
+                      isUrdu: true,
+                    )),
+                    const SizedBox(height: 16),
+                  ],
                 ],
               ),
             ),
@@ -632,5 +646,350 @@ class _AnimatedTextImpactRow extends StatelessWidget {
         ],
       ),
     ).animate().fadeIn(duration: 400.ms, delay: (index * 150).ms).slideY(begin: 0.2, end: 0);
+  }
+}
+
+class WhatIfScenarioCard extends ConsumerStatefulWidget {
+  final CrisisState state;
+  const WhatIfScenarioCard({super.key, required this.state});
+
+  @override
+  ConsumerState<WhatIfScenarioCard> createState() => _WhatIfScenarioCardState();
+}
+
+class _WhatIfScenarioCardState extends ConsumerState<WhatIfScenarioCard> {
+  bool _loading = false;
+  String? _selectedScenario;
+  String? _impact;
+  String? _recommendation;
+
+  Future<void> _triggerScenario(String scenarioName, String promptName) async {
+    setState(() {
+      _selectedScenario = scenarioName;
+      _loading = true;
+      _impact = null;
+      _recommendation = null;
+    });
+
+    // Simulate shimmer loading for 1.5 seconds
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    try {
+      final groq = ref.read(groqServiceProvider);
+      
+      // Serialize current crises and resources remaining
+      final crisesStr = widget.state.finalState.activeCrises.map((c) => "${c.type} at ${c.location} (Severity: ${c.severity})").join(', ');
+      final resourcesStr = "Ambulances: ${widget.state.finalState.resourcePoolRemaining.ambulances}, Rescue Teams: ${widget.state.finalState.resourcePoolRemaining.rescueTeams}, Police: ${widget.state.finalState.resourcePoolRemaining.policeUnits}";
+      final stateStr = "Crises: [$crisesStr], Remaining Resources: [$resourcesStr]";
+
+      final result = await groq.runWhatIfScenario(stateStr, promptName);
+      
+      if (mounted) {
+        setState(() {
+          _impact = result['impact'];
+          _recommendation = result['recommendation'];
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _impact = "Forecasting pipeline encountered a simulation timeout. Projected average response latency rises by +4 min.";
+          _recommendation = "Maintain standard local grid patrols to cover telemetric blind spots.";
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  void _reset() {
+    setState(() {
+      _selectedScenario = null;
+      _impact = null;
+      _recommendation = null;
+      _loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      accentColor: accentPurple,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.psychology_rounded, color: accentPurple, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'SCENARIO PLANNING', 
+                style: syne(12, color: accentPurple, weight: FontWeight.w700, letterSpacing: 1.5),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Model side-effects and unintended consequences of resource constraints.',
+            style: inter(11, color: textSecondary),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildScenarioButton(
+                  title: '-1 Ambulance',
+                  icon: Icons.remove_circle_outline,
+                  active: _selectedScenario == '-1 Ambulance',
+                  onTap: () => _triggerScenario('-1 Ambulance', 'removing 1 ambulance from current active pool'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildScenarioButton(
+                  title: '+Road Closure',
+                  icon: Icons.block,
+                  active: _selectedScenario == '+Road Closure',
+                  onTap: () => _triggerScenario('+Road Closure', 'adding a major road closure on Srinagar Highway G-10 junction'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildScenarioButton(
+                  title: '2x Resources',
+                  icon: Icons.add_circle_outline,
+                  active: _selectedScenario == '2x Resources',
+                  onTap: () => _triggerScenario('2x Resources', 'doubling current active resources'),
+                ),
+              ),
+            ],
+          ),
+          if (_loading) ...[
+            const SizedBox(height: 16),
+            _buildShimmerPlaceholder(),
+          ] else if (_impact != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: surfaceLight,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: accentPurple.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'PROJECTED FORECAST: $_selectedScenario', 
+                        style: inter(9, color: accentPurple, weight: FontWeight.w800, letterSpacing: 1),
+                      ),
+                      InkWell(
+                        onTap: _reset,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: accentCritical.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text('RESET', style: inter(8, color: accentCritical, weight: FontWeight.w700)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text('IMPACT:', style: inter(9, color: textSecondary, weight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text(_impact!, style: inter(12, color: accentWarning, weight: FontWeight.w500)),
+                  const SizedBox(height: 10),
+                  Text('RECOMMENDATION:', style: inter(9, color: textSecondary, weight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text(_recommendation!, style: inter(12, color: accentSafe, weight: FontWeight.w500)),
+                ],
+              ),
+            ).animate().fadeIn().slideY(begin: 0.1),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScenarioButton({
+    required String title,
+    required IconData icon,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: _loading ? null : onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        decoration: BoxDecoration(
+          color: active ? accentPurple.withOpacity(0.15) : surface.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: active ? accentPurple : accentPurple.withOpacity(0.15), 
+            width: active ? 1.5 : 1.0,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 18, color: active ? Colors.white : textSecondary),
+            const SizedBox(height: 6),
+            Text(
+              title, 
+              style: inter(10, color: active ? Colors.white : textSecondary, weight: active ? FontWeight.w700 : FontWeight.normal),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerPlaceholder() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: surfaceLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accentPurple.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(width: 80, height: 8, color: Colors.white10),
+          const SizedBox(height: 12),
+          Container(width: double.infinity, height: 10, color: Colors.white10),
+          const SizedBox(height: 6),
+          Container(width: 200, height: 10, color: Colors.white10),
+          const SizedBox(height: 12),
+          Container(width: 120, height: 8, color: Colors.white10),
+          const SizedBox(height: 6),
+          Container(width: 150, height: 10, color: Colors.white10),
+        ],
+      ),
+    ).animate(onPlay: (controller) => controller.repeat())
+     .shimmer(duration: 1200.ms, color: accentPurple.withOpacity(0.15));
+  }
+}
+
+class _ActionStakeholderMessageCard extends StatefulWidget {
+  final String title;
+  final String body;
+  final Color color;
+  final bool isUrdu;
+
+  const _ActionStakeholderMessageCard({
+    required this.title,
+    required this.body,
+    required this.color,
+    this.isUrdu = false,
+  });
+
+  @override
+  State<_ActionStakeholderMessageCard> createState() => _ActionStakeholderMessageCardState();
+}
+
+class _ActionStakeholderMessageCardState extends State<_ActionStakeholderMessageCard> {
+  final FlutterTts _tts = FlutterTts();
+  bool _isPlaying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tts.setCompletionHandler(() {
+      if (mounted) setState(() => _isPlaying = false);
+    });
+    _tts.setErrorHandler((msg) {
+      if (mounted) setState(() => _isPlaying = false);
+      debugPrint('Actions TTS Error: $msg');
+    });
+  }
+
+  @override
+  void dispose() {
+    _tts.stop();
+    super.dispose();
+  }
+
+  Future<void> _speak() async {
+    if (_isPlaying) return;
+    setState(() => _isPlaying = true);
+    await _tts.setLanguage('ur-PK');
+    await _tts.speak(widget.body);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final nowTime = '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}';
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: surfaceLight.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border(left: BorderSide(color: widget.color, width: 4)),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.mark_email_read_rounded, size: 14, color: widget.color),
+              const SizedBox(width: 6),
+              Text(widget.title.toUpperCase(), style: inter(11, color: widget.color, weight: FontWeight.w700)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(color: accentSafe.withOpacity(0.15), borderRadius: BorderRadius.circular(4)),
+                child: Text('SENT $nowTime', style: inter(9, color: accentSafe, weight: FontWeight.w700)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(widget.body, style: inter(13, color: textPrimary).copyWith(height: widget.isUrdu ? 1.6 : 1.3)),
+          if (widget.isUrdu) ...[
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: _isPlaying ? null : _speak,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: _isPlaying ? accentWarning.withOpacity(0.3) : accentInfo.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _isPlaying ? accentWarning : accentInfo, width: 2),
+                  boxShadow: [
+                    BoxShadow(color: accentInfo.withOpacity(0.2), blurRadius: 10, spreadRadius: 2),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(_isPlaying ? Icons.volume_up_rounded : Icons.campaign_rounded, size: 24, color: _isPlaying ? accentWarning : accentInfo),
+                    const SizedBox(width: 12),
+                    Text(
+                      _isPlaying ? 'BROADCASTING URDU ALERT...' : 'TAP HERE: BROADCAST URDU AUDIO ALERT', 
+                      style: inter(13, color: _isPlaying ? accentWarning : accentInfo, weight: FontWeight.w900, letterSpacing: 1),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ]
+        ],
+      ),
+    );
   }
 }

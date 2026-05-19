@@ -270,6 +270,7 @@ The communication contract between our Multi-Agent Groq Service and the Flutter 
 | **Sector H-8** | `33.6710` | `73.0680` | Institutional and medical zoning boundary |
 | **Sector I-9** | `33.6565` | `73.0820` | Industrial zone border |
 | **Zero Point** | `33.6923` | `73.0649` | Islamabad's primary central highway interchange |
+| **Nullah Lai Corridor** | `33.6650` | `73.0530` | Historical flood vulnerability zone — Rawalpindi to G-10 |
 
 ### Dynamic Alphanumeric Coordinate Parsing
 **Nigehbaan AI** features a highly resilient regex parser that intercepts custom location inputs. If an operator types an exact coordinate pair (e.g., `33.7253, 73.0451` or `33.72,73.06`), **Nigehbaan AI** automatically isolates the decimal points and centers the map viewport immediately on those exact coordinates without relying on named static lookups. If a string sector name is typed, the system executes an alphanumeric normalization pass to match it with the nearest known catalog centroid.

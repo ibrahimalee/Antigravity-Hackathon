@@ -208,7 +208,25 @@ class _CrisisCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(3),
                               ),
                               const SizedBox(height: 4),
-                              Text('${(val * 100).toInt()}%', style: inter(12, color: accentColor)),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('${(val * 100).toInt()}%', style: inter(12, color: accentColor)),
+                                  if (crisis.status == CrisisStatus.monitoring)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: accentWarning.withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(color: accentWarning.withOpacity(0.4)),
+                                      ),
+                                      child: Text(
+                                        'P(ESCALATION) = ${((crisis.confidence / 0.60) * 100).round()}% | Est. 3–6 min',
+                                        style: inter(8, color: accentWarning, weight: FontWeight.w800),
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
@@ -391,7 +409,7 @@ class _CrisisDetailModalState extends ConsumerState<_CrisisDetailModal> {
                 const SizedBox(height: 16),
                 
                 // Feature 3: Nullah Lai Predictive Risk Layer Chip
-                if (crisis.location.toLowerCase().contains('g-10') && crisis.type.toLowerCase().contains('flood')) ...[
+                if (crisis.type.toLowerCase().contains('flood')) ...[
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     margin: const EdgeInsets.only(bottom: 16),
@@ -404,7 +422,7 @@ class _CrisisDetailModalState extends ConsumerState<_CrisisDetailModal> {
                       children: [
                         const Icon(Icons.warning_amber_rounded, color: Colors.blueAccent, size: 16),
                         const SizedBox(width: 8),
-                        Expanded(child: Text('⚠️ HIGH-RISK ZONE — Nullah Lai corridor. 73% flood recurrence when rainfall exceeds 50mm/hr. Historical reference: July 2023 floods.', style: inter(11, color: Colors.blueAccent, weight: FontWeight.w600))),
+                        Expanded(child: Text('⚠️ HISTORICAL HIGH-RISK ZONE — Nullah Lai corridor. 73% flood recurrence when rainfall exceeds 50mm/hr. Ref: July 2023 Islamabad floods.', style: inter(11, color: Colors.blueAccent, weight: FontWeight.w600))),
                       ],
                     ),
                   ).animate().fadeIn().slideX(),

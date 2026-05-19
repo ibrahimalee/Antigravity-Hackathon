@@ -804,10 +804,10 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
     _markers.add(Marker(
       markerId: const MarkerId('nullah_lai_label'),
       position: const LatLng(33.6650, 73.0530),
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan),
       infoWindow: const InfoWindow(
-        title: 'NULLAH LAI FLOOD CORRIDOR',
-        snippet: 'Historical high-risk zone — 73% flood recurrence',
+        title: 'Nullah Lai Corridor',
+        snippet: 'Historical flood risk zone — 73% recurrence >50mm/hr',
       ),
     ));
   }
