@@ -290,7 +290,7 @@ The communication contract between our Multi-Agent Groq Service and the Flutter 
       • Alerts: Idle           • Alerts Triggered      • Rationale Written      • Murree Stays Active    • System Warn Banner
 ```
 
-### 🏆 The 3 "Golden Moments" to Demo for the Judges
+### 🏆 The 4 "Golden Moments" to Demo for the Judges
 
 > [!TIP]
 > **When presenting this timeline, be sure to highlight these specific interactive beats that prove the platform's depth:**
@@ -391,6 +391,15 @@ The communication contract between our Multi-Agent Groq Service and the Flutter 
   Active crises continuously breathe to indicate real-time spatial evolution.
   * *Sine-Wave Breathing:* Radii pulse dynamically ($1.0 \leftrightarrow 1.08$) and fill opacities breathe ($8\% \leftrightarrow 15\%$) every 100ms using continuous sine-wave calculations tied to device time.
   * *Ease-Back Collapse:* Retracted circles shrink smoothly to `0.0` over exactly 800ms utilizing a custom `Curves.easeInBack` transition.
+* **Live Confidence Escalation Meter (`ConfidenceGaugCard`):**
+  A real-time horizontal gauge mounted at the top of the Signals panel 
+  tracks the fused credibility score as each signal arrives. A vertical 
+  dashed threshold line at 0.60 marks the ACTIVE trigger point. As signals 
+  corroborate, the needle climbs: at the moment the score crosses 0.60, 
+  `HapticFeedback.heavyImpact()` fires, the threshold line briefly glows, 
+  and the status chip transitions from `MONITORING` (amber) to `ACTIVE` (red) 
+  in real time. This makes the agentic decision process viscerally visible 
+  to a non-technical observer.
 * **Live Before/After Operational Impact Panel:**
   Replacing static metrics cards in the Actions panel is a stateful comparative dashboard:
   * *Dual-Column Tracking:* Direct comparison between "Before Nigehbaan AI" (constant red) and "After Nigehbaan AI" (dynamic green).
@@ -640,7 +649,7 @@ When we encountered a persistent `UnimplementedError: updateGroundOverlays()` cr
 ![Antigravity Workspace Screenshot - Out-of-the-Box Innovation Ideas](assets/screenshots/antigravity_innovation_proof.png)
 *(Screenshot: Antigravity suggesting the tactical integration of physical device haptics at the 0.60 threshold)*
 
-*(Judges: The actual workspace logs and prompt histories for these iterations are preserved in the `.gemini/antigravity/brain/` repository included in our submission package).*
+*(Judges: The actual workspace logs, task lists, implementation plans, and prompt histories for these iterations are preserved in the `antigravity_artifacts/` repository folder included in our submission package).*
 
 ---
 
