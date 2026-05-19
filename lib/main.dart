@@ -1753,7 +1753,7 @@ class _ActionsPanelTab extends StatelessWidget {
                   children: [
                     const Icon(Icons.swap_horizontal_circle_rounded, color: accentWarning, size: 18),
                     const SizedBox(width: 8),
-                    Text('RESOURCE TRADE-OFF RATIONALE', style: syne(11, weight: FontWeight.w800, color: accentWarning)),
+                    Expanded(child: Text('RESOURCE TRADE-OFF RATIONALE', style: syne(11, weight: FontWeight.w800, color: accentWarning))),
                   ],
                 ),
                 const SizedBox(height: 6),
