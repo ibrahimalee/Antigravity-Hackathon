@@ -596,23 +596,30 @@ class _StakeholderMessageCardState extends State<_StakeholderMessageCard> {
           const SizedBox(height: 8),
           Text(widget.body, style: inter(13, color: textPrimary).copyWith(height: widget.isUrdu ? 1.6 : 1.3)),
           if (widget.isUrdu) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             InkWell(
               onTap: _isPlaying ? null : _speak,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: widget.color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: widget.color.withOpacity(0.5)),
+                  color: _isPlaying ? accentWarning.withOpacity(0.3) : accentInfo.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _isPlaying ? accentWarning : accentInfo, width: 2),
+                  boxShadow: [
+                    BoxShadow(color: accentInfo.withOpacity(0.2), blurRadius: 10, spreadRadius: 2),
+                  ],
                 ),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(_isPlaying ? Icons.volume_up_rounded : Icons.campaign_rounded, size: 16, color: widget.color),
-                    const SizedBox(width: 8),
-                    Text(_isPlaying ? 'BROADCASTING...' : 'BROADCAST ALERT', style: inter(11, color: widget.color, weight: FontWeight.w700)),
+                    Icon(_isPlaying ? Icons.volume_up_rounded : Icons.campaign_rounded, size: 24, color: _isPlaying ? accentWarning : accentInfo),
+                    const SizedBox(width: 12),
+                    Text(
+                      _isPlaying ? 'BROADCASTING URDU ALERT...' : 'TAP HERE: BROADCAST URDU AUDIO ALERT', 
+                      style: inter(13, color: _isPlaying ? accentWarning : accentInfo, weight: FontWeight.w900, letterSpacing: 1),
+                    ),
                   ],
                 ),
               ),
