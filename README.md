@@ -1,21 +1,27 @@
-# 🚨 Nigehbaan AI (نگہبان) — Crisis Intelligence & Response Orchestrator
-### *Autonomous Multi-Agent AI Command Center for Islamabad, Pakistan*
+<div align="center">
 
-[![Flutter Prototype](https://img.shields.io/badge/Prototype-Flutter_Mobile-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
-[![State Management](https://img.shields.io/badge/State-Riverpod_2.5.1-47D1CC?logo=dart&logoColor=white)](https://riverpod.dev)
-[![Maps Engine](https://img.shields.io/badge/Maps-Google_Maps-4285F4?logo=google-maps&logoColor=white)](https://developers.google.com/maps)
-[![LLM Pipeline](https://img.shields.io/badge/AI_Engine-Llama_3.3_70B-7B61FF?logo=meta&logoColor=white)](https://groq.com)
-[![OS Compatibility](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white)](https://android.com)
+# 🚨 Nigehbaan AI (نگہبان)
+### *Crisis Intelligence & Response Orchestrator*
+#### *Autonomous Multi-Agent AI Command Center for Islamabad, Pakistan*
+
+[![Flutter Prototype](https://img.shields.io/badge/Prototype-Flutter_Mobile-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![State Management](https://img.shields.io/badge/State-Riverpod_2.5.1-47D1CC?style=for-the-badge&logo=dart&logoColor=white)](https://riverpod.dev)
+[![Maps Engine](https://img.shields.io/badge/Maps-Google_Maps-4285F4?style=for-the-badge&logo=google-maps&logoColor=white)](https://developers.google.com/maps)
+[![LLM Pipeline](https://img.shields.io/badge/AI_Engine-Llama_3.3_70B-7B61FF?style=for-the-badge&logo=meta&logoColor=white)](https://groq.com)
+[![OS Compatibility](https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://android.com)
+
+</div>
 
 ---
 
 ## 📖 Executive Summary & Mission Statement
 
-**Nigehbaan AI** (نگہبان) (Crisis Intelligence & Response Orchestrator) is a next-generation, high-fidelity tactical command center designed specifically for Islamabad, Pakistan. Built as a native Flutter mobile war-room dashboard, Nigehbaan harnesses a **three-agent autonomous AI orchestration pipeline** powered by Groq's high-speed inference engine (`llama-3.3-70b-versatile`). 
+**Nigehbaan AI** (نگہبان) is a next-generation, high-fidelity tactical command center designed specifically for Islamabad, Pakistan. Built as a native Flutter mobile war-room dashboard, Nigehbaan harnesses a **three-agent autonomous AI orchestration pipeline** powered by Groq's high-speed inference engine (`llama-3.3-70b-versatile`). 
 
 In emergency dispatch and public safety, operators are inundated with noisy, unstructured, and localized reports (such as social media posts in Roman Urdu, telemetry alerts, and conflicting sensor readings). Standard rule-based dispatch systems fail here—either triggering city-wide panics on unverified keywords, or suffering from "alert fatigue" and resource exhaustion during multi-incident spikes. 
 
-**Nigehbaan AI Mission:** To autonomously ingest chaotic urban signals, verify their credibility, identify active crises, resolve resource conflicts under heavy constraint, and coordinate localized response plans—all within an explainable, audit-logged tactical interface that keeps emergency commanders in complete situational control.
+> [!IMPORTANT]
+> **Nigehbaan AI Mission:** To autonomously ingest chaotic urban signals, verify their credibility, identify active crises, resolve resource conflicts under heavy constraint, and coordinate localized response plans—all within an explainable, audit-logged tactical interface that keeps emergency commanders in complete situational control.
 
 ---
 
