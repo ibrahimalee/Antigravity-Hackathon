@@ -441,9 +441,11 @@ The communication contract between our Multi-Agent Groq Service and the Flutter 
   Mounted directly inside the Actions tab timeline, operators can model resource 
   exhaustion and transit bottleneck forecasts in real-time. Features interactive 
   what-if scenario buttons (`-1 Ambulance`, `+Road Closure`, `2x Resources`) with 
-  a 1.5s live-animating glassmorphic shimmer loader, routing predictions through 
-  the rotated Groq Llama-3.3 agent service with a highly reliable local telemetry 
-  fallback cache for bulletproof demo safety.
+  a 1.5s shimmer loading state. Each scenario routes through the existing Groq 
+  key rotation service with a local fallback cache. If the Groq response arrives 
+  within 3 seconds, it displays the AI-generated impact prediction. If it times 
+  out, it falls back to pre-computed scenario deltas derived from the current 
+  resource allocation state.
 
 ### 🎨 Tier 3: Elite UX Polish
 * **Absolute Crash & Type Cast Safety:**
@@ -517,10 +519,10 @@ A primary benchmark of the **Nigehbaan AI** platform is its comparison against a
 ```
 nigehbaan_ai/ (Project Root)
  ├── 📁 assets/
- │    ├── 📄 ciro_state_initial.json       # Initial baseline state mock
- │    ├── 📄 ciro_state_second_crisis.json # Phase 2 state model validation JSON
- │    ├── 📄 ciro_state_field_report.json  # Phase 3 retraction validation JSON
- │    ├── 📄 ciro_state_api_failure.json   # Phase 4 degraded fallback validation JSON
+ │    ├── 📄 nigehbaan_state_initial.json       # Initial baseline state mock
+ │    ├── 📄 nigehbaan_state_second_crisis.json # Phase 2 state model validation JSON
+ │    ├── 📄 nigehbaan_state_field_report.json  # Phase 3 retraction validation JSON
+ │    ├── 📄 nigehbaan_state_api_failure.json   # Phase 4 degraded fallback validation JSON
  │    └── 📁 screenshots/                  # High-Resolution platform gallery
  ├── 📁 lib/
  │    ├── 📁 models/
