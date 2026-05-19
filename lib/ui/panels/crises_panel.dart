@@ -174,13 +174,17 @@ class _CrisisCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('SEVERITY', style: inter(9, color: textSecondary, letterSpacing: 1.5)),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(crisis.severity?.toStringAsFixed(1) ?? '-', style: syne(32, weight: FontWeight.w700, color: accentColor)),
-                            Text('/10', style: inter(16, color: textSecondary)),
-                          ],
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(crisis.severity?.toStringAsFixed(1) ?? '-', style: syne(32, weight: FontWeight.w700, color: accentColor)),
+                              Text('/10', style: inter(16, color: textSecondary)),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -400,7 +404,7 @@ class _CrisisDetailModalState extends ConsumerState<_CrisisDetailModal> {
                       children: [
                         const Icon(Icons.warning_amber_rounded, color: Colors.blueAccent, size: 16),
                         const SizedBox(width: 8),
-                        Expanded(child: Text('⚠️ HISTORICAL HIGH-RISK ZONE — 73% flood recurrence when rainfall >50mm/hr.', style: inter(11, color: Colors.blueAccent, weight: FontWeight.w600))),
+                        Expanded(child: Text('⚠️ HIGH-RISK ZONE — Nullah Lai corridor. 73% flood recurrence when rainfall exceeds 50mm/hr. Historical reference: July 2023 floods.', style: inter(11, color: Colors.blueAccent, weight: FontWeight.w600))),
                       ],
                     ),
                   ).animate().fadeIn().slideX(),

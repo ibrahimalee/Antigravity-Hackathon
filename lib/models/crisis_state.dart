@@ -19,15 +19,21 @@ class CrisisState {
     this.apiFailure,
   });
 
+  static Map<String, dynamic> _safeMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return <String, dynamic>{};
+  }
+
   factory CrisisState.fromJson(Map<String, dynamic> json) {
     return CrisisState(
-      simulationTime: json['simulation_time'] as String,
-      scenario: json['scenario'] as String,
+      simulationTime: json['simulation_time'] as String? ?? '',
+      scenario: json['scenario'] as String? ?? '',
       degradedMode: json['final_state']?['degraded_mode'] as bool? ?? false,
-      agentTraces: AgentTraces.fromJson(json['agent_traces'] as Map<String, dynamic>),
-      finalState: FinalState.fromJson(json['final_state'] as Map<String, dynamic>),
+      agentTraces: AgentTraces.fromJson(_safeMap(json['agent_traces'])),
+      finalState: FinalState.fromJson(_safeMap(json['final_state'])),
       apiFailure: json['api_failure'] != null
-          ? ApiFailureInfo.fromJson(json['api_failure'] as Map<String, dynamic>)
+          ? ApiFailureInfo.fromJson(_safeMap(json['api_failure']))
           : null,
     );
   }
@@ -48,9 +54,9 @@ class AgentTraces {
 
   factory AgentTraces.fromJson(Map<String, dynamic> json) {
     return AgentTraces(
-      agent1: Agent1Fusion.fromJson(json['agent1_signal_fusion'] as Map<String, dynamic>),
-      agent2: Agent2Detection.fromJson(json['agent2_crisis_detection'] as Map<String, dynamic>),
-      agent3: Agent3Allocation.fromJson(json['agent3_resource_allocation'] as Map<String, dynamic>),
+      agent1: Agent1Fusion.fromJson(CrisisState._safeMap(json['agent1_signal_fusion'])),
+      agent2: Agent2Detection.fromJson(CrisisState._safeMap(json['agent2_crisis_detection'])),
+      agent3: Agent3Allocation.fromJson(CrisisState._safeMap(json['agent3_resource_allocation'])),
     );
   }
 }
@@ -65,7 +71,7 @@ class Agent1Fusion {
     return Agent1Fusion(
       steps: List<String>.from(json['steps'] as List? ?? []),
       fusedSignals: (json['fused_signals'] as List? ?? [])
-          .map((e) => FusedSignal.fromJson(e as Map<String, dynamic>))
+          .map((e) => FusedSignal.fromJson(CrisisState._safeMap(e)))
           .toList(),
     );
   }
@@ -81,7 +87,7 @@ class Agent2Detection {
     return Agent2Detection(
       steps: List<String>.from(json['steps'] as List? ?? []),
       crises: (json['crises'] as List? ?? [])
-          .map((e) => Crisis.fromJson(e as Map<String, dynamic>))
+          .map((e) => Crisis.fromJson(CrisisState._safeMap(e)))
           .toList(),
     );
   }
@@ -97,7 +103,7 @@ class Agent3Allocation {
     return Agent3Allocation(
       steps: List<String>.from(json['steps'] as List? ?? []),
       allocations: (json['allocations'] as List? ?? [])
-          .map((e) => ResourceAllocation.fromJson(e as Map<String, dynamic>))
+          .map((e) => ResourceAllocation.fromJson(CrisisState._safeMap(e)))
           .toList(),
     );
   }
@@ -237,12 +243,12 @@ class ResourceAllocation {
       crisisId: json['crisis_id']?.toString() ?? 'unknown',
       priorityScore: (json['priority_score'] as num?)?.toDouble() ?? 0.0,
       resourcesAssigned: ResourceBundle.fromJson(
-          (json['resources_assigned'] as Map<String, dynamic>?) ?? {}),
+          CrisisState._safeMap(json['resources_assigned'])),
       actions: (json['actions'] as List? ?? [])
-          .map((e) => CrisisAction.fromJson(e as Map<String, dynamic>))
+          .map((e) => CrisisAction.fromJson(CrisisState._safeMap(e)))
           .toList(),
       stakeholderMessages: StakeholderMessages.fromJson(
-          (json['stakeholder_messages'] as Map<String, dynamic>?) ?? {}),
+          CrisisState._safeMap(json['stakeholder_messages'])),
     );
   }
 }
@@ -341,7 +347,7 @@ class FinalState {
   factory FinalState.fromJson(Map<String, dynamic> json) {
     return FinalState(
       activeCrises: (json['active_crises'] as List? ?? [])
-          .map((e) => Crisis.fromJson(e as Map<String, dynamic>))
+          .map((e) => Crisis.fromJson(CrisisState._safeMap(e)))
           .toList(),
       monitoringEvents: (json['monitoring_events'] as List? ?? [])
           .map((e) => Crisis.fromJson({
@@ -356,14 +362,14 @@ class FinalState {
               }))
           .toList(),
       allocations: (json['allocations'] as List? ?? [])
-          .map((e) => AllocationSummary.fromJson(e as Map<String, dynamic>))
+          .map((e) => AllocationSummary.fromJson(CrisisState._safeMap(e)))
           .toList(),
       resourcePoolRemaining: ResourceBundle.fromJson(
-          (json['resource_pool_remaining'] as Map<String, dynamic>?) ?? {'ambulances': 4, 'rescue_teams': 3, 'police_units': 5, 'medical_vans': 2}),
+          CrisisState._safeMap(json['resource_pool_remaining'])),
       pendingAlerts: List<String>.from(json['pending_alerts'] as List? ?? []),
       retractedAlerts: List<String>.from(json['retracted_alerts'] as List? ?? []),
       systemWarnings: (json['system_warnings'] as List? ?? [])
-          .map((e) => SystemWarning.fromJson(e as Map<String, dynamic>))
+          .map((e) => SystemWarning.fromJson(CrisisState._safeMap(e)))
           .toList(),
       degradedMode: json['degraded_mode'] as bool? ?? false,
     );
@@ -387,7 +393,7 @@ class AllocationSummary {
 
   factory AllocationSummary.fromJson(Map<String, dynamic> json) {
     return AllocationSummary(
-      crisisId: json['crisis_id'] as String,
+      crisisId: json['crisis_id']?.toString() ?? 'unknown',
       ambulances: json['ambulances'] as int? ?? 0,
       rescueTeams: json['rescue_teams'] as int? ?? 0,
       policeUnits: json['police_units'] as int? ?? 0,
@@ -409,9 +415,9 @@ class SystemWarning {
 
   factory SystemWarning.fromJson(Map<String, dynamic> json) {
     return SystemWarning(
-      type: json['type'] as String,
-      source: json['source'] as String,
-      impact: json['impact'] as String,
+      type: json['type']?.toString() ?? json['message']?.toString() ?? 'UNKNOWN',
+      source: json['source']?.toString() ?? 'system',
+      impact: json['impact']?.toString() ?? json['message']?.toString() ?? 'Unknown impact',
     );
   }
 }
@@ -435,11 +441,11 @@ class ApiFailureInfo {
 
   factory ApiFailureInfo.fromJson(Map<String, dynamic> json) {
     return ApiFailureInfo(
-      signalId: json['signal_id'] as int,
-      source: json['source'] as String,
-      reason: json['reason'] as String,
-      fallback: json['fallback'] as String,
-      cachedValue: json['cached_value'] as String,
+      signalId: json['signal_id'] as int? ?? 0,
+      source: json['source']?.toString() ?? 'system',
+      reason: json['reason']?.toString() ?? 'Unknown reason',
+      fallback: json['fallback']?.toString() ?? '',
+      cachedValue: json['cached_value']?.toString() ?? '',
     );
   }
 }

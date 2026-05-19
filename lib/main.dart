@@ -23,22 +23,127 @@ void main() {
   if (defaultTargetPlatform == TargetPlatform.android) {
     AndroidGoogleMapsFlutter.useAndroidViewSurface = true;
   }
-  runApp(const ProviderScope(child: CiroApp()));
+  runApp(const ProviderScope(child: NigehbaanApp()));
 }
 
-class CiroApp extends StatelessWidget {
-  const CiroApp({super.key});
+class NigehbaanApp extends StatelessWidget {
+  const NigehbaanApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'CIRO — Command Center',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
+      title: 'Nigehbaan AI (نگہبان)',
+      theme: ThemeData(
+        brightness: Brightness.dark,
         scaffoldBackgroundColor: bgPrimary,
-        colorScheme: ColorScheme.fromSeed(seedColor: accentInfo, brightness: Brightness.dark),
+        colorScheme: const ColorScheme.dark(
+          primary: accentInfo,
+          secondary: accentCritical,
+          surface: bgSecondary,
+        ),
       ),
-      home: const CrisisMapScreen(),
+      home: const PreloaderScreen(),
+    );
+  }
+}
+
+class PreloaderScreen extends StatefulWidget {
+  const PreloaderScreen({super.key});
+
+  @override
+  State<PreloaderScreen> createState() => _PreloaderScreenState();
+}
+
+class _PreloaderScreenState extends State<PreloaderScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 2500));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.5, curve: Curves.easeIn)));
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+        CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.5, curve: Curves.easeOutBack)));
+    
+    _controller.forward();
+
+    Future.delayed(const Duration(milliseconds: 3200), () {
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => const CrisisMapScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 800),
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: bgPrimary,
+      body: Center(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return FadeTransition(
+              opacity: _fadeAnimation,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: accentSafe.withOpacity(0.1),
+                        boxShadow: [
+                          BoxShadow(color: accentSafe.withOpacity(0.3), blurRadius: 40, spreadRadius: 10),
+                        ],
+                      ),
+                      child: const Icon(Icons.shield_moon_rounded, size: 50, color: accentSafe),
+                    ),
+                    const SizedBox(height: 32),
+                    Text('Nigehbaan AI', style: syne(32, weight: FontWeight.w800, color: textPrimary, letterSpacing: 1.2)),
+                    const SizedBox(height: 8),
+                    Text('نگہبان', style: inter(24, weight: FontWeight.w600, color: accentSafe)),
+                    const SizedBox(height: 48),
+                    SizedBox(
+                      width: 200,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: _controller.value,
+                          backgroundColor: Colors.white10,
+                          valueColor: const AlwaysStoppedAnimation<Color>(accentSafe),
+                          minHeight: 4,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('INITIALIZING PIPELINE...', style: inter(10, weight: FontWeight.w700, color: textSecondary, letterSpacing: 2.0)),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }
@@ -61,23 +166,36 @@ const _islamabadCenter = LatLng(33.7215, 73.0433);
 
 const _locations = {
   'G-10': LatLng(33.6938, 73.0229),
-  'G-13': LatLng(33.6420, 72.9680),
-  'Murree Road': LatLng(33.6631, 73.0844),
+  'G-10/2': LatLng(33.6920, 73.0250),
+  'G-13': LatLng(33.6420, 72.9950),
+  'Murree Road': LatLng(33.6786, 73.0951),
+  'Faizabad': LatLng(33.6786, 73.0951),
   'F-7': LatLng(33.7280, 73.0560),
-  'Dhok Hassu': LatLng(33.6300, 73.0800),
-  'G-9': LatLng(33.6900, 73.0300),
-  'PIMS Hospital': LatLng(33.7130, 73.0580),
+  'Dhok Hassu': LatLng(33.5960, 73.0700),
+  'G-9': LatLng(33.6980, 73.0330),
+  'PIMS Hospital': LatLng(33.7097, 73.0588),
   'Srinagar Highway': LatLng(33.6850, 73.0150),
   'Blue Area': LatLng(33.7118, 73.0684),
   'Centaurus Mall': LatLng(33.7077, 73.0498),
   'F-6': LatLng(33.7315, 73.0685),
   'E-11': LatLng(33.7005, 72.9782),
   'G-11': LatLng(33.6841, 72.9986),
-  'H-8': LatLng(33.6780, 73.0450),
-  'I-9': LatLng(33.6565, 73.0528),
+  'H-8': LatLng(33.6710, 73.0680),
+  'I-9': LatLng(33.6565, 73.0820),
   'Zero Point': LatLng(33.6923, 73.0649),
-  'Faizabad': LatLng(33.6631, 73.0844),
 };
+
+const List<LatLng> _nullahLaiCorridor = [
+  LatLng(33.5800, 73.0750),
+  LatLng(33.6100, 73.0720),
+  LatLng(33.6350, 73.0650),
+  LatLng(33.6580, 73.0530),
+  LatLng(33.6720, 73.0420),
+  LatLng(33.6850, 73.0320),
+  LatLng(33.6938, 73.0229), // G-10
+  LatLng(33.7050, 73.0150),
+  LatLng(33.7150, 73.0100),
+];
 
 // ── DARK MAP STYLE ───────────────────────────────────────────────────────────
 const _darkMapStyle = '''[
@@ -175,6 +293,11 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
   Timer? _dispatchTimer;
   Timer? _pulsingTimer;
   final Map<String, double> _dispatchProgress = {};
+
+  // Map mode state
+  MapType _currentMapType = MapType.normal;
+  bool _trafficEnabled = false;
+  bool _showMapModeMenu = false;
 
   static const CameraPosition _initialCamera = CameraPosition(
     target: _islamabadCenter,
@@ -382,8 +505,8 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
 
   void _showNotification(String title, String body) async {
     const androidDetails = AndroidNotificationDetails(
-      'ciro_alerts',
-      'CIRO Crisis Alerts',
+      'nigehbaan_alerts',
+      'Nigehbaan AI Alerts',
       channelDescription: 'Alerts for real-time crisis detection and management',
       importance: Importance.high,
       priority: Priority.high,
@@ -402,10 +525,11 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
   }
 
   LatLng _getBaseCoords(String crisisLocation) {
-    if (crisisLocation.contains('G-10')) {
-      return const LatLng(33.7130, 73.0580); // PIMS HQ for G-10
+    // Dispatch origin: use the nearest known infrastructure hub
+    if (crisisLocation.toLowerCase().contains('murree')) {
+      return const LatLng(33.7215, 73.0433); // Dispatch from city center
     }
-    return const LatLng(33.6938, 73.0229); // G-10 Base for others
+    return const LatLng(33.7097, 73.0588); // PIMS Hospital (main dispatch hub)
   }
 
   LatLng _getCoords(String location) {
@@ -595,19 +719,31 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
       );
     }
     
-    // Nullah Lai Predictive Risk Layer (Feature 3)
-    final bool g10FloodActive = currentState.finalState.activeCrises.any((c) => c.location.toLowerCase().contains('g-10') && c.type.toLowerCase().contains('flood'));
-    _polygons['nullah_lai'] = Polygon(
-      polygonId: const PolygonId('nullah_lai'),
-      points: const [
-        LatLng(33.6200, 73.0700), LatLng(33.6400, 73.0600),
-        LatLng(33.6600, 73.0500), LatLng(33.6800, 73.0400),
-        LatLng(33.6938, 73.0229),
-      ],
-      fillColor: Colors.blue.withOpacity(g10FloodActive ? 0.20 : 0.08),
-      strokeColor: Colors.blueAccent.withOpacity(0.5),
-      strokeWidth: g10FloodActive ? 2 : 1,
+    // Nullah Lai Predictive Risk Layer
+    final bool floodActive = currentState.finalState.activeCrises
+        .any((c) => c.type.toUpperCase().contains('FLOOD'));
+    final bool g10FloodActive = currentState.finalState.activeCrises.any((c) =>
+        c.location.toLowerCase().contains('g-10') &&
+        c.type.toLowerCase().contains('flood'));
+    final double nullahFillOpacity = floodActive ? 0.18 : 0.06;
+    _polygons['nullah_lai_corridor'] = Polygon(
+      polygonId: const PolygonId('nullah_lai_corridor'),
+      points: _nullahLaiCorridor,
+      fillColor: accentInfo.withOpacity(nullahFillOpacity),
+      strokeColor: accentInfo.withOpacity(0.35),
+      strokeWidth: 1,
     );
+
+    // Nullah Lai label marker
+    _markers.add(Marker(
+      markerId: const MarkerId('nullah_lai_label'),
+      position: const LatLng(33.6650, 73.0530),
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+      infoWindow: const InfoWindow(
+        title: 'NULLAH LAI FLOOD CORRIDOR',
+        snippet: 'Historical high-risk zone — 73% flood recurrence',
+      ),
+    ));
   }
 
   void _showInjectCrisisSheet() {
@@ -716,9 +852,15 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
             markers: _markers,
             polylines: Set<Polyline>.of(_polylines.values),
             polygons: Set<Polygon>.of(_polygons.values),
+            mapType: _currentMapType,
+            trafficEnabled: _trafficEnabled,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
             onMapCreated: (controller) {
               _mapController = controller;
-              controller.setMapStyle(_darkMapStyle);
+              if (_currentMapType == MapType.normal) {
+                controller.setMapStyle(_darkMapStyle);
+              }
             },
           ),
 
@@ -756,6 +898,30 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
                 onRetry: () => ref.read(crisisProvider.notifier).startSimulation(),
               ),
             ),
+
+          // Map Mode Selector Button (top-left)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 120,
+            left: 16,
+            child: _MapModeSelector(
+              currentMapType: _currentMapType,
+              trafficEnabled: _trafficEnabled,
+              showMenu: _showMapModeMenu,
+              onToggleMenu: () => setState(() => _showMapModeMenu = !_showMapModeMenu),
+              onSelectMapType: (type) {
+                setState(() {
+                  _currentMapType = type;
+                  _showMapModeMenu = false;
+                });
+                if (type == MapType.normal) {
+                  _mapController?.setMapStyle(_darkMapStyle);
+                } else {
+                  _mapController?.setMapStyle(null);
+                }
+              },
+              onToggleTraffic: () => setState(() => _trafficEnabled = !_trafficEnabled),
+            ),
+          ),
 
           // Floating Action Buttons (FAB Column)
           Positioned(
@@ -873,7 +1039,7 @@ class _TopBar extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('CIRO COMMAND CENTER', style: syne(14, weight: FontWeight.w800, color: accentSafe, letterSpacing: 0.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Text('Nigehbaan AI (نگہبان)', style: syne(14, weight: FontWeight.w800, color: accentSafe, letterSpacing: 0.5), maxLines: 1, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 2),
                         Text('AUTONOMOUS CRISIS SIMULATION', style: inter(8, weight: FontWeight.w500, color: textSecondary, letterSpacing: 1), maxLines: 1, overflow: TextOverflow.ellipsis),
                       ],
@@ -1094,7 +1260,12 @@ class _ErrorOverlay extends StatelessWidget {
             children: [
               const Icon(Icons.error_outline_rounded, color: accentCritical, size: 24),
               const SizedBox(width: 12),
-              Text('SIMULATION FAULT ENCOUNTERED', style: syne(14, weight: FontWeight.w800, color: accentCritical)),
+              Expanded(
+                child: Text(
+                  'SIMULATION FAULT ENCOUNTERED',
+                  style: syne(14, weight: FontWeight.w800, color: accentCritical),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -1430,6 +1601,33 @@ class _CrisesPanelTab extends StatelessWidget {
                         decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
                         child: Text(e, style: inter(9, color: textPrimary)),
                       )).toList(),
+                    ),
+                  ],
+
+                  // Nullah Lai flood zone warning
+                  if (crisis.type.toUpperCase().contains('FLOOD') &&
+                      (crisis.location.toUpperCase().contains('G-10') ||
+                          crisis.location.toUpperCase().contains('G-11'))) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: accentInfo.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: accentInfo.withOpacity(0.35)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.water_rounded, color: accentInfo, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '⚠️ HISTORICAL HIGH-RISK ZONE — Nullah Lai corridor. 73% flood recurrence when rainfall exceeds 50mm/hr.',
+                              style: inter(10, color: accentInfo, weight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
 
@@ -1900,6 +2098,141 @@ class _FieldReportSheet extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── MAP MODE SELECTOR ─────────────────────────────────────────────────────────
+class _MapModeSelector extends StatelessWidget {
+  final MapType currentMapType;
+  final bool trafficEnabled;
+  final bool showMenu;
+  final VoidCallback onToggleMenu;
+  final ValueChanged<MapType> onSelectMapType;
+  final VoidCallback onToggleTraffic;
+
+  const _MapModeSelector({
+    required this.currentMapType,
+    required this.trafficEnabled,
+    required this.showMenu,
+    required this.onToggleMenu,
+    required this.onSelectMapType,
+    required this.onToggleTraffic,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Toggle button
+        GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onToggleMenu();
+          },
+          child: _glassCard(
+            padding: const EdgeInsets.all(10),
+            radius: 12,
+            accent: accentInfo,
+            child: Icon(
+              showMenu ? Icons.close_rounded : Icons.layers_rounded,
+              color: accentInfo,
+              size: 22,
+            ),
+          ),
+        ),
+
+        // Expanded mode menu
+        AnimatedSize(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          child: showMenu
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: _glassCard(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                    radius: 14,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildModeButton(
+                          label: 'NORMAL',
+                          icon: Icons.map_outlined,
+                          active: currentMapType == MapType.normal,
+                          color: accentInfo,
+                          onTap: () => onSelectMapType(MapType.normal),
+                        ),
+                        const SizedBox(height: 6),
+                        _buildModeButton(
+                          label: 'SATELLITE',
+                          icon: Icons.satellite_alt_rounded,
+                          active: currentMapType == MapType.hybrid,
+                          color: accentWarning,
+                          onTap: () => onSelectMapType(MapType.hybrid),
+                        ),
+                        const SizedBox(height: 6),
+                        _buildModeButton(
+                          label: 'TERRAIN',
+                          icon: Icons.terrain_rounded,
+                          active: currentMapType == MapType.terrain,
+                          color: accentSafe,
+                          onTap: () => onSelectMapType(MapType.terrain),
+                        ),
+                        const Divider(color: Colors.white12, height: 14),
+                        _buildModeButton(
+                          label: 'TRAFFIC',
+                          icon: Icons.traffic_rounded,
+                          active: trafficEnabled,
+                          color: accentCritical,
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            onToggleTraffic();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModeButton({
+    required String label,
+    required IconData icon,
+    required bool active,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: active ? color.withOpacity(0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: active ? color.withOpacity(0.6) : Colors.white10,
+            width: 0.8,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: active ? color : textSecondary),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: inter(9, weight: FontWeight.w700, color: active ? color : textSecondary),
+            ),
+          ],
+        ),
       ),
     );
   }

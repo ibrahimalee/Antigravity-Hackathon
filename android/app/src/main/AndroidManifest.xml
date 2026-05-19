@@ -33,9 +33,16 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- PRIMARY GOOGLE MAPS API KEY -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDsWVdsqeTig6D259sgs5Acd6nkFWh-gJY" />
+
+        <!-- FALLBACK GOOGLE MAPS API KEY (Swap with the value above if the primary key fails/expires)
+        <meta-data
+            android:name="com.google.android.geo.API_KEY_FALLBACK"
+            android:value="AIzaSyAWMb8W_Fp8EukTV-yNlsC2lMsQ86dc09E" />
+        -->
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

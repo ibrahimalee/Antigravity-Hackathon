@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/crisis_provider.dart';
@@ -49,7 +50,7 @@ class _SignalFeedPanelState extends ConsumerState<SignalFeedPanel> {
 
     return Column(
       children: [
-        if (appState.currentState != null) _ConfidenceMeterCard(),
+        if (appState.currentState != null) const ConfidenceGaugCard(),
         // Summary Header Row
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -243,35 +244,69 @@ class _SignalCard extends StatelessWidget {
   }
 }
 
-class _ConfidenceMeterCard extends ConsumerWidget {
+class ConfidenceGaugCard extends ConsumerStatefulWidget {
+  const ConfidenceGaugCard({super.key});
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ConfidenceGaugCard> createState() => _ConfidenceGaugCardState();
+}
+
+class _ConfidenceGaugCardState extends ConsumerState<ConfidenceGaugCard> {
+  final Map<String, bool> _hasCrossedThreshold = {};
+
+  @override
+  Widget build(BuildContext context) {
     final appState = ref.watch(crisisProvider);
     final state = appState.currentState;
     if (state == null) return const SizedBox.shrink();
 
-    final fusedSignals = state.agentTraces.agent1.fusedSignals;
+    final fusedSignals = state.agentTraces.agent1.fusedSignals.toList();
     if (fusedSignals.isEmpty) return const SizedBox.shrink();
+
+    final countdownAsync = ref.watch(countdownProvider);
+    final countdown = countdownAsync.value ?? 0;
+
+    // We build gauges for all actual fused signals
+    final List<Map<String, dynamic>> gaugesToBuild = fusedSignals.map((fs) => {
+      'location': fs.location,
+      'score': fs.credibilityScore,
+    }).toList();
+
+    // If Phase 1 countdown is active, inject a mock Murree Road gauge
+    if (appState.currentPhaseNumber == 1 && countdown > 0 && countdown <= 12) {
+      final murreeScore = 0.575 * ((12 - countdown) / 12.0);
+      if (!gaugesToBuild.any((g) => g['location'].toString().toLowerCase().contains('murree'))) {
+        gaugesToBuild.add({
+          'location': 'Murree Road',
+          'score': murreeScore,
+        });
+      }
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
-        children: fusedSignals.map((fs) => _buildGauge(context, fs)).toList(),
+        children: gaugesToBuild.map((g) => _buildGauge(context, g['location'], g['score'])).toList(),
       ),
     );
   }
 
-  Widget _buildGauge(BuildContext context, dynamic fs) {
-    final score = fs.credibilityScore;
+  Widget _buildGauge(BuildContext context, String location, double score) {
     final isCrisis = score >= 0.60;
     
+    if (isCrisis && !(_hasCrossedThreshold[location] ?? false)) {
+      _hasCrossedThreshold[location] = true;
+      HapticFeedback.heavyImpact();
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: surfaceLight.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isCrisis ? accentCritical.withOpacity(0.5) : surfaceLight),
+        border: Border.all(color: isCrisis ? accentCritical.withOpacity(0.8) : surfaceLight),
+        boxShadow: isCrisis ? [BoxShadow(color: accentCritical.withOpacity(0.2), blurRadius: 12, spreadRadius: 2)] : [],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,7 +314,7 @@ class _ConfidenceMeterCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('CONFIDENCE METER: ${fs.location.toUpperCase()}', style: inter(10, weight: FontWeight.w700, color: textSecondary, letterSpacing: 1)),
+              Text('SIGNAL FUSION CONFIDENCE: ${location.toUpperCase()}', style: inter(10, weight: FontWeight.w700, color: textSecondary, letterSpacing: 1)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
@@ -316,7 +351,7 @@ class _ConfidenceMeterCard extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: val >= 0.60 ? accentCritical : accentInfo,
                           borderRadius: BorderRadius.circular(6),
-                          boxShadow: val >= 0.60 ? [BoxShadow(color: accentCritical.withOpacity(0.5), blurRadius: 8)] : [],
+                          boxShadow: val >= 0.60 ? [BoxShadow(color: accentCritical.withOpacity(0.8), blurRadius: 12, spreadRadius: 2)] : [],
                         ),
                       );
                     },
@@ -329,7 +364,7 @@ class _ConfidenceMeterCard extends ConsumerWidget {
                       width: 2,
                       decoration: BoxDecoration(
                         color: score >= 0.60 ? accentCritical : Colors.red.withOpacity(0.5),
-                        boxShadow: score >= 0.60 ? [BoxShadow(color: accentCritical, blurRadius: 4)] : [],
+                        boxShadow: score >= 0.60 ? [BoxShadow(color: accentCritical, blurRadius: 8, spreadRadius: 2)] : [],
                       ),
                     ),
                   ),
@@ -348,7 +383,7 @@ class _ConfidenceMeterCard extends ConsumerWidget {
               );
             }
           ),
-          const SizedBox(height: score > 0 && score < 0.60 ? 20 : 4),
+          SizedBox(height: score > 0 && score < 0.60 ? 20 : 4),
         ],
       ),
     ).animate().fadeIn().slideY(begin: -0.1);

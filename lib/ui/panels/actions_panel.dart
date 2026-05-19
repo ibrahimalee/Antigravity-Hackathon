@@ -186,11 +186,19 @@ class _AnnotatedAction {
   _AnnotatedAction(this.action, this.crisisId);
 }
 
-class _ActionTimelineItem extends StatelessWidget {
+class _ActionTimelineItem extends ConsumerStatefulWidget {
   final _AnnotatedAction action;
   final bool isLast;
 
   const _ActionTimelineItem({required this.action, required this.isLast});
+
+  @override
+  ConsumerState<_ActionTimelineItem> createState() => _ActionTimelineItemState();
+}
+
+class _ActionTimelineItemState extends ConsumerState<_ActionTimelineItem> {
+  bool _isLoadingWhy = false;
+  String? _whyExplanation;
 
   String _getType(String desc, String stateChange) {
     final text = (desc + ' ' + stateChange).toLowerCase();
@@ -229,9 +237,31 @@ class _ActionTimelineItem extends StatelessWidget {
     }
   }
 
+  Future<void> _askWhy() async {
+    setState(() => _isLoadingWhy = true);
+    try {
+      final groq = ref.read(groqServiceProvider);
+      final contextStr = "Crisis: ${widget.action.crisisId}. Type: ${_getType(widget.action.action.description, widget.action.action.stateChange)}.";
+      final exp = await groq.askWhy(contextStr, widget.action.action.description);
+      if (mounted) {
+        setState(() {
+          _whyExplanation = exp;
+          _isLoadingWhy = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _whyExplanation = "Explanation unavailable. Action aligns with standard operating procedure.";
+          _isLoadingWhy = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final type = _getType(action.action.description, action.action.stateChange);
+    final type = _getType(widget.action.action.description, widget.action.action.stateChange);
     final color = _getColor(type);
     final icon = _getIcon(type);
 
@@ -245,7 +275,7 @@ class _ActionTimelineItem extends StatelessWidget {
             child: Stack(
               alignment: Alignment.topCenter,
               children: [
-                if (!isLast)
+                if (!widget.isLast)
                   Positioned.fill(
                     left: 11, right: 11,
                     top: 14,
@@ -266,8 +296,7 @@ class _ActionTimelineItem extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: GlassCard(
-                accentColor: color, // accentInfo requested, but colored by type is better, falling back to prompt: "GlassCard, accentInfo color"
-                // wait, the prompt says "RIGHT CARD (GlassCard, accentInfo color, 12px padding, 8px radius)"
+                accentColor: color,
                 borderRadius: 8,
                 padding: const EdgeInsets.all(12),
                 child: Column(
@@ -284,7 +313,7 @@ class _ActionTimelineItem extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      action.action.description,
+                      widget.action.action.description,
                       style: inter(13, color: textPrimary).copyWith(height: 1.5),
                     ),
                     const SizedBox(height: 10),
@@ -293,7 +322,7 @@ class _ActionTimelineItem extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(color: surfaceLight, borderRadius: BorderRadius.circular(12)),
-                          child: Text('TARGET: ${action.crisisId.toUpperCase()}', style: inter(9, color: textSecondary, weight: FontWeight.w600)),
+                          child: Text('TARGET: ${widget.action.crisisId.toUpperCase()}', style: inter(9, color: textSecondary, weight: FontWeight.w600)),
                         ),
                         const SizedBox(width: 8),
                         Container(
@@ -301,8 +330,73 @@ class _ActionTimelineItem extends StatelessWidget {
                           decoration: BoxDecoration(color: accentSafe.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
                           child: Text('COMPLETED', style: inter(9, color: accentSafe, weight: FontWeight.w600)),
                         ),
+                        const Spacer(),
+                        if (_whyExplanation == null && !_isLoadingWhy)
+                          InkWell(
+                            onTap: _askWhy,
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: accentPurple.withOpacity(0.5)),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.psychology_rounded, size: 12, color: accentPurple),
+                                  const SizedBox(width: 4),
+                                  Text('ASK WHY', style: inter(9, color: accentPurple, weight: FontWeight.w700)),
+                                ],
+                              ),
+                            ),
+                          ),
                       ],
                     ),
+                    if (_isLoadingWhy) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: accentPurple.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: accentPurple.withOpacity(0.2)),
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(
+                              width: 12, height: 12,
+                              child: CircularProgressIndicator(color: accentPurple, strokeWidth: 2),
+                            ),
+                            const SizedBox(width: 8),
+                            Text('Querying AI reasoning...', style: inter(11, color: accentPurple, fontStyle: FontStyle.italic)),
+                          ],
+                        ),
+                      ).animate().fadeIn(),
+                    ],
+                    if (_whyExplanation != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: accentPurple.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: accentPurple.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.psychology_rounded, size: 16, color: accentPurple),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _whyExplanation!,
+                                style: inter(12, color: textPrimary).copyWith(height: 1.4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ).animate().fadeIn().slideY(begin: -0.1),
+                    ],
                   ],
                 ),
               ).animate().fadeIn(duration: 300.ms).slideX(begin: 0.05),
@@ -334,7 +428,7 @@ class _TradeOffMatrixCard extends StatelessWidget {
             children: [
               const Icon(Icons.bolt_rounded, size: 16, color: accentPurple),
               const SizedBox(width: 6),
-              Text('RESOURCE REALLOCATION RATIONALE', style: inter(12, color: accentPurple, weight: FontWeight.w600)),
+              Expanded(child: Text('RESOURCE REALLOCATION RATIONALE', style: inter(12, color: accentPurple, weight: FontWeight.w600))),
             ],
           ),
           const SizedBox(height: 16),
@@ -403,8 +497,8 @@ class _LiveImpactPanel extends ConsumerWidget {
           Row(
             children: [
               Expanded(flex: 2, child: Text('IMPACT METRIC', style: inter(10, color: textSecondary, weight: FontWeight.w600))),
-              Expanded(child: Text('BEFORE CIRO', style: inter(10, color: accentCritical, weight: FontWeight.w700))),
-              Expanded(child: Text('AFTER CIRO', style: inter(10, color: accentSafe, weight: FontWeight.w700))),
+              Expanded(child: Text('BEFORE NIGEHBAAN', style: inter(10, color: accentCritical, weight: FontWeight.w700))),
+              Expanded(child: Text('AFTER NIGEHBAAN', style: inter(10, color: accentSafe, weight: FontWeight.w700))),
             ],
           ),
           const Divider(color: Colors.white10, height: 16),

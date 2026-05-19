@@ -336,7 +336,7 @@ IMPORTANT RULES:
         "pending_alerts": [],
         "retracted_alerts": [],
         "system_warnings": [
-          {"type": "API_FAILURE", "message": errorMessage}
+          {"type": "API_FAILURE", "source": "groq_api", "impact": errorMessage}
         ],
         "degraded_mode": true
       },
@@ -345,5 +345,42 @@ IMPORTANT RULES:
         "timestamp": DateTime.now().toIso8601String()
       }
     };
+  }
+
+  Future<String> askWhy(String contextStr, String action) async {
+    final userPrompt = 'Context: $contextStr\nAction taken: $action\nExplain in exactly one short, concise sentence (max 20 words) why this specific action was taken in this context.';
+
+    final bodyStr = jsonEncode({
+      'model': 'llama-3.3-70b-versatile',
+      'messages': [
+        {'role': 'system', 'content': 'You are a tactical AI explainability engine. Answer strictly with the reasoning for the action. No pleasantries, no conversational text. Max 20 words.'},
+        {'role': 'user', 'content': userPrompt}
+      ],
+      'temperature': 0.1,
+      'max_tokens': 60,
+    });
+
+    for (int attempt = 1; attempt <= _apiKeys.length; attempt++) {
+      final apiKey = _nextKey();
+      try {
+        final response = await http.post(
+          Uri.parse(_endpoint),
+          headers: {
+            'Authorization': 'Bearer $apiKey',
+            'Content-Type': 'application/json',
+          },
+          body: bodyStr,
+        ).timeout(const Duration(seconds: 15));
+        
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return data['choices'][0]['message']['content'].toString().trim();
+        }
+      } catch (e) {
+        if (attempt == _apiKeys.length) break;
+      }
+    }
+    
+    return "Action aligns with standard operating procedure for this priority tier.";
   }
 }

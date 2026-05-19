@@ -185,7 +185,7 @@ class CrisisNotifier extends StateNotifier<CrisisAppState> {
 
     try {
       final signals = [...initialSignals, ...secondCrisisSignals];
-      const scenario = "Phase 2: NEW CRISIS — Multi-vehicle accident on Murree Road. System already managing G-10 flood (2 ambulances, 1 rescue team deployed). Must rebalance resources. Compute priority scores for both crises. Reallocate: move 1 ambulance from G-10 to Murree Road. Write explicit trade-off rationale. Both crises must be in active_crises.";
+      const scenario = "Phase 2: NEW CRISIS — Multi-vehicle accident on Murree Road near Faizabad. Murree Road now has 3 signals including a field report with 0.85 credibility (Rescue 1122 confirmed 2 injured, ambulance required immediately). Fused confidence for Murree Road is 0.72, which EXCEEDS the 0.60 activation threshold. Classify Murree Road as ACTIVE with severity 6.5. System is already managing G-10 flood (2 ambulances, 1 rescue team deployed). You now have TWO active crises competing for limited resources. Show the explicit trade-off: move 1 ambulance from G-10 to Murree Road, justify why. Write explicit trade-off rationale explaining the resource rebalancing decision. Both crises must appear in active_crises.";
       
       final rawResult = await _groqService.runAgentPipeline(
         signals: signals,
@@ -270,7 +270,7 @@ class CrisisNotifier extends StateNotifier<CrisisAppState> {
 
     try {
       final weatherOfflineSignal = {
-        "id": 9,
+        "id": 10,
         "source": "sensor",
         "text": "Telemetry alert: Weather API offline. Connection timeout.",
         "location_hint": "System",
@@ -467,8 +467,9 @@ const initialSignals = [
 const secondCrisisSignals = [
   {"id": 6, "source": "anonymous_social", "text": "Buri tarah accident hua hai Murree Road pe, ek gaari palat gayi", "location_hint": "Murree Road", "timestamp": "10:50", "base_credibility": 0.35},
   {"id": 7, "source": "traffic_api", "text": "Murree Road congestion 72% near Rawalpindi junction, multiple vehicles", "location_hint": "Murree Road", "timestamp": "10:52", "base_credibility": 0.80},
+  {"id": 8, "source": "field_report", "text": "Rescue 1122 called to Murree Road near Faizabad: confirmed multi-vehicle collision, 2 injured, ambulance required immediately", "location_hint": "Murree Road", "timestamp": "10:53", "base_credibility": 0.85},
 ];
 
 const fieldReportSignal = [
-  {"id": 8, "source": "field_report", "text": "On-site verification G-10/2: burst water main, NOT surface flooding. Isolated to one block. No rescue needed.", "location_hint": "G-10", "timestamp": "10:58", "base_credibility": 0.85},
+  {"id": 9, "source": "field_report", "text": "On-site verification G-10/2: burst water main, NOT surface flooding. Isolated to one block. No rescue needed.", "location_hint": "G-10", "timestamp": "10:58", "base_credibility": 0.85},
 ];

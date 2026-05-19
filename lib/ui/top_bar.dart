@@ -55,7 +55,7 @@ class _TopBarState extends State<TopBar> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('CIRO', style: syne(22, weight: FontWeight.w800, color: accentSafe)),
+                  Text('Nigehbaan AI (نگہبان)', style: syne(22, weight: FontWeight.w800, color: accentSafe)),
                   Text('ISLAMABAD INCIDENT COMMAND',
                       style: inter(10, weight: FontWeight.w500, color: textSecondary, letterSpacing: 2.5)),
                 ],
