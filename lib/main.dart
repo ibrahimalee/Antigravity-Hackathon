@@ -1241,6 +1241,7 @@ class _PhaseIndicator extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final countdownAsync = ref.watch(countdownProvider);
     final seconds = countdownAsync.value ?? 0;
+    final isPaused = ref.watch(crisisProvider.select((s) => s.isPaused));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -1259,6 +1260,23 @@ class _PhaseIndicator extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Text('Next assessment in: ${seconds}s', style: syne(10, weight: FontWeight.w700, color: accentWarning)),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () => ref.read(crisisProvider.notifier).togglePause(),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: accentWarning.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                      size: 14,
+                      color: accentWarning,
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Icon(Icons.smart_toy_rounded, size: 14, color: accentSafe).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(0.8, 0.8)),
                 const SizedBox(width: 4),

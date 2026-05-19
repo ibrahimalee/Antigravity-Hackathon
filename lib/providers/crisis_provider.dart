@@ -50,6 +50,7 @@ class CrisisAppState {
   final String currentPhaseLabel;
   final bool degradedMode;
   final String? tradeoffRationale;    // populated during multi-crisis phase
+  final bool isPaused;                // controls if countdown pause is active
 
   const CrisisAppState({
     required this.phase,
@@ -62,6 +63,7 @@ class CrisisAppState {
     required this.currentPhaseLabel,
     required this.degradedMode,
     this.tradeoffRationale,
+    required this.isPaused,
   });
 
   factory CrisisAppState.initial() {
@@ -76,6 +78,7 @@ class CrisisAppState {
       currentPhaseLabel: 'Awaiting Simulation',
       degradedMode: false,
       tradeoffRationale: null,
+      isPaused: false,
     );
   }
 
@@ -90,6 +93,7 @@ class CrisisAppState {
     String? currentPhaseLabel,
     bool? degradedMode,
     String? tradeoffRationale,
+    bool? isPaused,
   }) {
     return CrisisAppState(
       phase: phase ?? this.phase,
@@ -102,6 +106,7 @@ class CrisisAppState {
       currentPhaseLabel: currentPhaseLabel ?? this.currentPhaseLabel,
       degradedMode: degradedMode ?? this.degradedMode,
       tradeoffRationale: tradeoffRationale ?? this.tradeoffRationale,
+      isPaused: isPaused ?? this.isPaused,
     );
   }
 }
@@ -312,9 +317,17 @@ class CrisisNotifier extends StateNotifier<CrisisAppState> {
   Future<void> _runCountdown(int seconds) async {
     for (int i = seconds; i >= 0; i--) {
       if (_isCancelled) return;
+      while (state.isPaused) {
+        if (_isCancelled) return;
+        await Future.delayed(const Duration(milliseconds: 150));
+      }
       _countdownController.add(i);
       await Future.delayed(const Duration(seconds: 1));
     }
+  }
+
+  void togglePause() {
+    state = state.copyWith(isPaused: !state.isPaused);
   }
 
   Future<void> injectCrisis(String type, String location) async {
