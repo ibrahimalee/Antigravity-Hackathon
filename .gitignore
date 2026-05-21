@@ -51,3 +51,7 @@ app.*.map.json
 
 # API Keys
 /lib/services/api_keys.dart
+
+# Videoscripts
+/VIDEO_DEMO_SCRIPT.md
+/VIDEO_DEMO_SCRIPT_ROMAN_URDU.md

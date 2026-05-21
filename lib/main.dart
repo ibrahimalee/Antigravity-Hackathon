@@ -13,6 +13,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 import 'models/crisis_state.dart';
 import 'providers/crisis_provider.dart';
@@ -764,9 +765,10 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
       _polylines['srinagar_closure'] = Polyline(
         polylineId: const PolylineId('srinagar_closure'),
         points: const [
-          LatLng(33.6890, 73.0250),
-          LatLng(33.6850, 73.0150),
-          LatLng(33.6810, 73.0050),
+          LatLng(33.6800, 72.9950), // Srinagar Hwy West End (G-13)
+          LatLng(33.6825, 73.0120), // Near G-10/G-11 Interchange
+          LatLng(33.6850, 73.0320), // Near G-10/G-9 Interchange
+          LatLng(33.6923, 73.0649), // Srinagar Hwy East End (Zero Point)
         ],
         color: accentCritical,
         width: 5,
@@ -776,9 +778,9 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
       _polylines['ijp_alternate'] = const Polyline(
         polylineId: PolylineId('ijp_alternate'),
         points: [
-          LatLng(33.6600, 73.0050),
-          LatLng(33.6620, 73.0150),
-          LatLng(33.6640, 73.0250),
+          LatLng(33.6310, 73.0150), // IJP Road West End (I-10/I-11 boundary)
+          LatLng(33.6350, 73.0420), // IJP Road Mid (I-9/I-10 boundary)
+          LatLng(33.6390, 73.0720), // Faizabad Junction (IJP Road East End)
         ],
         color: accentSafe,
         width: 4,
@@ -818,7 +820,6 @@ class _CrisisMapScreenState extends ConsumerState<CrisisMapScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => _InjectCrisisSheet(
         onInject: (type, location) {
-          Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Injected $type at $location — agents responding...', style: inter(13, color: Colors.white, weight: FontWeight.w600)),
@@ -1759,12 +1760,12 @@ class _CrisesPanelTab extends StatelessWidget {
                 height: 350,
                 child: ListView(
                   children: [
-                    _buildMessageItem('PUBLIC (ENGLISH)', msgs.publicEnglish, accentCritical),
-                    _buildMessageItem('PUBLIC (URDU)', msgs.publicUrdu, accentSafe),
-                    _buildMessageItem('PIMS HOSPITAL', msgs.pimsHospital, accentInfo),
-                    _buildMessageItem('TRAFFIC AUTHORITY', msgs.trafficAuthority, accentWarning),
-                    _buildMessageItem('IESCO UTILITY', msgs.iescoutility, accentPurple),
-                    _buildMessageItem('MEDIA OUTLETS', msgs.mediaCommand, textSecondary),
+                    _StakeholderMessageCardWithTts(title: 'PUBLIC (ENGLISH)', body: msgs.publicEnglish, color: accentCritical),
+                    _StakeholderMessageCardWithTts(title: 'PUBLIC (URDU)', body: msgs.publicUrdu, color: accentSafe, isUrdu: true),
+                    _StakeholderMessageCardWithTts(title: 'PIMS HOSPITAL', body: msgs.pimsHospital, color: accentInfo),
+                    _StakeholderMessageCardWithTts(title: 'TRAFFIC AUTHORITY', body: msgs.trafficAuthority, color: accentWarning),
+                    _StakeholderMessageCardWithTts(title: 'IESCO UTILITY', body: msgs.iescoutility, color: accentPurple),
+                    _StakeholderMessageCardWithTts(title: 'MEDIA OUTLETS', body: msgs.mediaCommand, color: textSecondary),
                   ],
                 ),
               ),
@@ -1779,21 +1780,103 @@ class _CrisesPanelTab extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildMessageItem(String label, String message, Color tintColor) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+class _StakeholderMessageCardWithTts extends StatefulWidget {
+  final String title;
+  final String body;
+  final Color color;
+  final bool isUrdu;
+
+  const _StakeholderMessageCardWithTts({
+    required this.title,
+    required this.body,
+    required this.color,
+    this.isUrdu = false,
+  });
+
+  @override
+  State<_StakeholderMessageCardWithTts> createState() => _StakeholderMessageCardWithTtsState();
+}
+
+class _StakeholderMessageCardWithTtsState extends State<_StakeholderMessageCardWithTts> {
+  final FlutterTts _tts = FlutterTts();
+  bool _isPlaying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tts.setCompletionHandler(() {
+      if (mounted) setState(() => _isPlaying = false);
+    });
+    _tts.setErrorHandler((msg) {
+      if (mounted) setState(() => _isPlaying = false);
+      debugPrint('TTS Error: $msg');
+    });
+  }
+
+  @override
+  void dispose() {
+    _tts.stop();
+    super.dispose();
+  }
+
+  Future<void> _speak() async {
+    if (_isPlaying) return;
+    setState(() => _isPlaying = true);
+    await _tts.setLanguage('ur-PK');
+    await _tts.speak(widget.body);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: surfaceLight.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border(left: BorderSide(color: widget.color, width: 4)),
+      ),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: syne(9, weight: FontWeight.w800, color: tintColor, letterSpacing: 1)),
-          const SizedBox(height: 4),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(8)),
-            child: Text(message.isNotEmpty ? message : 'N/A', style: inter(11, color: textPrimary)),
+          Row(
+            children: [
+              Icon(Icons.mark_email_read_rounded, size: 14, color: widget.color),
+              const SizedBox(width: 6),
+              Text(widget.title.toUpperCase(), style: inter(11, color: widget.color, weight: FontWeight.w700)),
+            ],
           ),
+          const SizedBox(height: 8),
+          Text(widget.body.isNotEmpty ? widget.body : 'N/A', style: inter(11, color: textPrimary).copyWith(height: widget.isUrdu ? 1.6 : 1.3)),
+          if (widget.isUrdu && widget.body.isNotEmpty && widget.body != 'N/A') ...[
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: _isPlaying ? null : _speak,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: _isPlaying ? accentWarning.withOpacity(0.3) : accentInfo.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _isPlaying ? accentWarning : accentInfo, width: 1.5),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(_isPlaying ? Icons.volume_up_rounded : Icons.campaign_rounded, size: 18, color: _isPlaying ? accentWarning : accentInfo),
+                    const SizedBox(width: 8),
+                    Text(
+                      _isPlaying ? 'BROADCASTING URDU AUDIO...' : 'TAP TO SPEAK (ROMAN URDU AUDIO)', 
+                      style: inter(10, color: _isPlaying ? accentWarning : accentInfo, weight: FontWeight.w800, letterSpacing: 0.5),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ]
         ],
       ),
     );
@@ -1824,6 +1907,25 @@ class _ActionsPanelTab extends StatelessWidget {
           _buildResourceGauges(const ResourceBundle(ambulances: 4, rescueTeams: 3, policeUnits: 5, medicalVans: 2)),
         ],
 
+        // Stakeholder Messages Audio Broadcast inside ACTIONS Panel (User Visibility request)
+        if (state != null && state.agentTraces.agent3.allocations.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text('STAKEHOLDER BRIEFINGS AUDIO FEED', style: syne(11, weight: FontWeight.w700, color: Colors.cyanAccent, letterSpacing: 1.5)),
+          const SizedBox(height: 8),
+          ...state.agentTraces.agent3.allocations.map((alloc) => _StakeholderMessageCardWithTts(
+            title: 'Urdu Broadcast Alert (UR)',
+            body: alloc.stakeholderMessages.publicUrdu,
+            color: Colors.cyanAccent,
+            isUrdu: true,
+          )),
+        ],
+
+        // What-If Strategic Scenario Sandbox Card
+        if (state != null) ...[
+          const SizedBox(height: 16),
+          _ActionsPanelWhatIfCard(state: state),
+        ],
+
         // Trade-off rationales if any
         if (appState.tradeoffRationale != null) ...[
           const SizedBox(height: 16),
@@ -1849,7 +1951,7 @@ class _ActionsPanelTab extends StatelessWidget {
 
         // Historic actions log
         const SizedBox(height: 16),
-        Text('AGENTIC DISPATCH ACTIONS LOG', style: syne(11, weight: FontWeight.w700, color: textSecondary, letterSpacing: 1.5)),
+        Text('AGENTIC DISPATCH ACTIONS LOG (WITH EXPLAINABILITY)', style: syne(11, weight: FontWeight.w700, color: textSecondary, letterSpacing: 1.5)),
         const SizedBox(height: 8),
         _buildHistoricActionsList(),
       ],
@@ -1931,31 +2033,395 @@ class _ActionsPanelTab extends StatelessWidget {
     }
 
     return Column(
-      children: allActions.map((action) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: _glassCard(
-            padding: const EdgeInsets.all(10),
-            radius: 8,
-            child: Row(
-              children: [
-                const Icon(Icons.check_circle_outline_rounded, color: accentSafe, size: 16),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(action['desc'] ?? '', style: inter(12, color: textPrimary)),
-                      Text('System state change: ${action['state'] ?? ""}', style: inter(9, color: textSecondary)),
-                    ],
-                  ),
-                ),
-                Text(action['time'] ?? '', style: inter(9, color: textSecondary)),
-              ],
-            ),
-          ),
+      children: allActions.asMap().entries.map((e) {
+        return _ActionsPanelTimelineItem(
+          action: e.value,
+          isLast: e.key == allActions.length - 1,
         );
       }).toList(),
+    );
+  }
+}
+
+class _ActionsPanelWhatIfCard extends ConsumerStatefulWidget {
+  final CrisisState state;
+  const _ActionsPanelWhatIfCard({super.key, required this.state});
+
+  @override
+  ConsumerState<_ActionsPanelWhatIfCard> createState() => _ActionsPanelWhatIfCardState();
+}
+
+class _ActionsPanelWhatIfCardState extends ConsumerState<_ActionsPanelWhatIfCard> {
+  bool _loading = false;
+  String? _selectedScenario;
+  String? _impact;
+  String? _recommendation;
+
+  Future<void> _triggerScenario(String scenarioName, String promptName) async {
+    setState(() {
+      _selectedScenario = scenarioName;
+      _loading = true;
+      _impact = null;
+      _recommendation = null;
+    });
+
+    // Simulate shimmer loading for 1.5 seconds
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    try {
+      final groq = ref.read(groqServiceProvider);
+      
+      // Serialize current crises and resources remaining
+      final crisesStr = widget.state.finalState.activeCrises.map((c) => "${c.type} at ${c.location} (Severity: ${c.severity})").join(', ');
+      final resourcesStr = "Ambulances: ${widget.state.finalState.resourcePoolRemaining.ambulances}, Rescue Teams: ${widget.state.finalState.resourcePoolRemaining.rescueTeams}, Police: ${widget.state.finalState.resourcePoolRemaining.policeUnits}";
+      final stateStr = "Crises: [$crisesStr], Remaining Resources: [$resourcesStr]";
+
+      final result = await groq.runWhatIfScenario(stateStr, promptName);
+      
+      if (mounted) {
+        setState(() {
+          _impact = result['impact'];
+          _recommendation = result['recommendation'];
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _impact = "Forecasting pipeline encountered a simulation timeout. Projected average response latency rises by +4 min.";
+          _recommendation = "Maintain standard local grid patrols to cover telemetric blind spots.";
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  void _reset() {
+    setState(() {
+      _selectedScenario = null;
+      _impact = null;
+      _recommendation = null;
+      _loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _glassCard(
+      accent: accentPurple,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.psychology_rounded, color: accentPurple, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'SCENARIO PLANNING', 
+                style: syne(12, color: accentPurple, weight: FontWeight.w700, letterSpacing: 1.5),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Model side-effects and unintended consequences of resource constraints.',
+            style: inter(11, color: textSecondary),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildScenarioButton(
+                  title: '-1 Ambulance',
+                  icon: Icons.remove_circle_outline,
+                  active: _selectedScenario == '-1 Ambulance',
+                  onTap: () => _triggerScenario('-1 Ambulance', 'removing 1 ambulance from current active pool'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildScenarioButton(
+                  title: '+Road Closure',
+                  icon: Icons.block,
+                  active: _selectedScenario == '+Road Closure',
+                  onTap: () => _triggerScenario('+Road Closure', 'adding a major road closure on Srinagar Highway G-10 junction'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildScenarioButton(
+                  title: '2x Resources',
+                  icon: Icons.add_circle_outline,
+                  active: _selectedScenario == '2x Resources',
+                  onTap: () => _triggerScenario('2x Resources', 'doubling current active resources'),
+                ),
+              ),
+            ],
+          ),
+          if (_loading) ...[
+            const SizedBox(height: 16),
+            _buildShimmerPlaceholder(),
+          ] else if (_impact != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: surfaceLight,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: accentPurple.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'PROJECTED FORECAST: $_selectedScenario', 
+                        style: inter(9, color: accentPurple, weight: FontWeight.w800, letterSpacing: 1),
+                      ),
+                      InkWell(
+                        onTap: _reset,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: accentCritical.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text('RESET', style: inter(8, color: accentCritical, weight: FontWeight.w700)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text('IMPACT:', style: inter(9, color: textSecondary, weight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text(_impact!, style: inter(11, color: accentWarning, weight: FontWeight.w500)),
+                  const SizedBox(height: 10),
+                  Text('RECOMMENDATION:', style: inter(9, color: textSecondary, weight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text(_recommendation!, style: inter(11, color: accentSafe, weight: FontWeight.w500)),
+                ],
+              ),
+            ).animate().fadeIn().slideY(begin: 0.1),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScenarioButton({
+    required String title,
+    required IconData icon,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: _loading ? null : onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        decoration: BoxDecoration(
+          color: active ? accentPurple.withOpacity(0.15) : surfaceLight.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: active ? accentPurple : accentPurple.withOpacity(0.15), 
+            width: active ? 1.5 : 1.0,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 18, color: active ? Colors.white : textSecondary),
+            const SizedBox(height: 6),
+            Text(
+              title, 
+              style: inter(10, color: active ? Colors.white : textSecondary, weight: active ? FontWeight.w700 : FontWeight.normal),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerPlaceholder() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: surfaceLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accentPurple.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(width: 80, height: 8, color: Colors.white10),
+          const SizedBox(height: 12),
+          Container(width: double.infinity, height: 10, color: Colors.white10),
+          const SizedBox(height: 6),
+          Container(width: 200, height: 10, color: Colors.white10),
+          const SizedBox(height: 12),
+          Container(width: 120, height: 8, color: Colors.white10),
+          const SizedBox(height: 6),
+          Container(width: 150, height: 10, color: Colors.white10),
+        ],
+      ),
+    ).animate(onPlay: (controller) => controller.repeat())
+     .shimmer(duration: 1200.ms, color: accentPurple.withOpacity(0.15));
+  }
+}
+
+class _ActionsPanelTimelineItem extends ConsumerStatefulWidget {
+  final Map<String, dynamic> action;
+  final bool isLast;
+
+  const _ActionsPanelTimelineItem({
+    required this.action,
+    required this.isLast,
+  });
+
+  @override
+  ConsumerState<_ActionsPanelTimelineItem> createState() => _ActionsPanelTimelineItemState();
+}
+
+class _ActionsPanelTimelineItemState extends ConsumerState<_ActionsPanelTimelineItem> {
+  bool _isLoadingWhy = false;
+  String? _whyExplanation;
+
+  Future<void> _askWhy() async {
+    setState(() => _isLoadingWhy = true);
+    try {
+      final groq = ref.read(groqServiceProvider);
+      final desc = widget.action['desc'] as String? ?? '';
+      final contextStr = "Crisis dispatch action. Description: $desc. Time: ${widget.action['time']}.";
+      final exp = await groq.askWhy(contextStr, desc);
+      if (mounted) {
+        setState(() {
+          _whyExplanation = exp;
+          _isLoadingWhy = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _whyExplanation = "Explanation offline: Action matches local optimized baseline dispatch procedure.";
+          _isLoadingWhy = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: _glassCard(
+        padding: const EdgeInsets.all(12),
+        radius: 12,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.check_circle_outline_rounded, color: accentSafe, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    widget.action['desc'] ?? '', 
+                    style: inter(12, color: textPrimary, weight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  widget.action['time'] ?? '', 
+                  style: inter(10, color: textSecondary, weight: FontWeight.w700),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'System change: ${widget.action['state'] ?? ""}', 
+              style: inter(10, color: textSecondary),
+            ),
+            if (_whyExplanation == null && !_isLoadingWhy) ...[
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: InkWell(
+                  onTap: _askWhy,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: accentPurple.withOpacity(0.5)),
+                      borderRadius: BorderRadius.circular(12),
+                      color: accentPurple.withOpacity(0.05),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.psychology_rounded, size: 12, color: accentPurple),
+                        const SizedBox(width: 4),
+                        Text('ASK WHY', style: inter(9, color: accentPurple, weight: FontWeight.w800, letterSpacing: 0.5)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            if (_isLoadingWhy) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: accentPurple.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: accentPurple.withOpacity(0.2)),
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(
+                      width: 12, height: 12,
+                      child: CircularProgressIndicator(color: accentPurple, strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('Querying AI reasoning...', style: inter(10, color: accentPurple).copyWith(fontStyle: FontStyle.italic)),
+                  ],
+                ),
+              ).animate().fadeIn(),
+            ],
+            if (_whyExplanation != null) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: accentPurple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: accentPurple.withOpacity(0.3)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.psychology_rounded, size: 16, color: accentPurple),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _whyExplanation!,
+                        style: inter(11, color: textPrimary).copyWith(height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn().slideY(begin: -0.1),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

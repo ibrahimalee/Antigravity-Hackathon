@@ -290,22 +290,22 @@ The communication contract between our Multi-Agent Groq Service and the Flutter 
       • Alerts: Idle           • Alerts Triggered      • Rationale Written      • Murree Stays Active    • System Warn Banner
 ```
 
-### 🏆 The 4 "Golden Moments" to Demo for the Judges
+### 🌟 Key Interactive Demonstration Highlights
 
 > [!TIP]
-> **When presenting this timeline, be sure to highlight these specific interactive beats that prove the platform's depth:**
->
-> 1. **🚦 The Dual Threshold Crossover:** 
->    During Phase 1, watch G-10's confidence cross 0.60 and trigger ACTIVE status. Then in Phase 2, watch Murree Road independently cross the same threshold at 0.72 — proving the system can simultaneously manage two escalating crises with the same rigorous evidence standard.
->
-> 2. **🔊 The Urdu TTS Alert Broadcast:** 
->    When Phase 1 triggers, open the Actions panel, scroll to the "Public (UR)" stakeholder message, and tap `BROADCAST ALERT`. The native device speaker will read the generated Urdu Roman warning aloud, demonstrating multi-modal accessibility.
->
-> 3. **💡 The Interactive Explainability Demo:** 
->    On any generated dispatch action (e.g., "Dispatch 2 ambulances to G-10"), click the `ASK WHY` button. The app will hit the Groq LLM in real-time and return a 20-word contextual justification for that specific tactical decision.
->
-> 4. **🗺️ The Nullah Lai Recognition Moment:** 
->    After Phase 3 retraction, point to the glowing blue corridor on the map. Say: "This is Nullah Lai. It floods every monsoon season. Nigehbaan AI knows this — and every flood detection in G-10 or G-11 is automatically cross-referenced against this historical risk corridor. The system doesn't just respond to crises. It understands the city."
+> **The following interactive elements showcase the visual fidelity, cognitive depth, and real-time responsiveness of the Nigehbaan AI platform:**
+
+1. **🚦 The Dual Threshold Crossover:** 
+   During Phase 1, G-10's confidence crosses the 0.60 threshold, triggering the `ACTIVE` status. In Phase 2, the Murree Road incident independently crosses its threshold at 0.72, showing the system's ability to simultaneously manage multiple escalating crises with rigorous, independent evidence validation.
+
+2. **🔊 The Urdu TTS Alert Broadcast:** 
+   When Phase 1 triggers, navigating to the Actions panel, scrolling to the "Public (UR)" stakeholder message, and tapping `BROADCAST ALERT` prompts the native device speaker to read the generated Urdu Roman warning aloud, demonstrating multi-modal localized accessibility.
+
+3. **💡 Interactive Decision Explainability:** 
+   For any generated dispatch action (e.g., "Dispatch 2 ambulances to G-10"), operators can tap the `ASK WHY` button. The application queries the Groq LLM in real-time to return a contextual, 20-word justification for that specific tactical decision.
+
+4. **🗺️ Nullah Lai Hydrological Context:** 
+   After the Phase 3 retraction, a persistent semi-transparent blue corridor remains highlighted on the map. This represents Nullah Lai, a historical flood-prone transit corridor in Islamabad. Nigehbaan AI correlates flood events in adjacent sectors (G-10/G-11) with this geospatial baseline, ensuring the response system is grounded in Islamabad's actual hydrology.
 
 ### Phase 1: Urban Flood Epicenter in Sector G-10 (T + 0s)
 * **Ingested Signals:**
@@ -617,39 +617,39 @@ Nigehbaan AI strictly adheres to global data privacy standards:
 
 ---
 
-## 🚀 Antigravity Development Journal (Integration Evidence)
+## 🚀 Antigravity Development Journal (AI-Assisted Co-Engineering)
 
-Building the Nigehbaan AI platform within the **Antigravity IDE** was a transformative experience. Instead of treating Antigravity as a generic text generator, we used it as an integrated, autonomous pair-programmer. Below is the concrete evidence of our AI-driven workflow, specifically highlighting where the agent actively shaped the architecture.
+Building the Nigehbaan AI platform within the **Antigravity IDE** was a collaborative engineering experience. Antigravity acted as an integrated, autonomous pair-programmer, shaping critical parts of the architecture, optimizing performance, and troubleshooting low-level systems. Below is the documentation of this AI-assisted workflow, showcasing how the agent helped build this production-ready application.
 
 ### 1. Architectural Guidance & Schema Design
-**Our initial prompt:** *"We need to parse Groq responses into Dart models for our crisis state. Here is the JSON."*
-**Antigravity's active intervention:** The agent recognized that standard deserialization would crash if Groq hallucinated nulls on primitive types. It proactively suggested and implemented a robust null-safe factory pattern utilizing `json['field']?.toString() ?? 'default'` across all 20+ fields in `crisis_state.dart`. We hadn't considered the degraded mode fallback map until the agent suggested wrapping the HTTP call in a try-catch that yields a pre-populated static `_getErrorStateMap`!
+* **Design Requirement:** Parse multi-agent Groq responses into strongly-typed Dart models for real-time state management.
+* **Co-Pilot Intervention:** The agent recognized that standard deserialization would fail if the LLM omitted keys or hallucinated null values on primitive types. It designed and implemented a robust null-safe factory pattern utilizing `json['field']?.toString() ?? 'default'` across all models in `crisis_state.dart`. Furthermore, it suggested wrapping the API client in a resilient error-handling block that falls back to a type-safe default map (`_getErrorStateMap`) during API outages, enabling the application's degraded mode.
 
 ![Antigravity Workspace Screenshot - Schema Design & Null-Safe Factories](assets/screenshots/antigravity_schema_proof.png)
-*(Screenshot: Antigravity suggesting the robust null-safe factory constructors in `crisis_state.dart`)*
+*(Screenshot: Antigravity proposing robust, null-safe factory constructors in `crisis_state.dart`)*
 
-### 2. Complex Algorithmic Optimization (The UI Thread)
-**Our initial prompt:** *"The map circles need to pulse when a crisis is active, and ambulances need to move along the map."*
-**Antigravity's active intervention:** Initially, we tried calling `setState` inside the map's `onCameraMove`. The agent immediately flagged this as a critical performance bottleneck that would cause massive UI jank. It rewrote the logic, decoupling the interpolation into a highly optimized 50ms `Timer.periodic` loop in `main.dart` that calculates `_dispatchProgress` vectors independently of the widget build cycle. 
+### 2. Complex Algorithmic Optimization (UI Thread Management)
+* **Design Requirement:** Dynamic map circle pulsing and smooth vector interpolation of emergency vehicles in transit.
+* **Co-Pilot Intervention:** Initial naive implementations calling `setState` inside continuous map updates caused significant frame drops. The agent flagged this thread bottleneck and refactored the logic, decoupling coordinate interpolation into an optimized 50ms `Timer.periodic` loop in `main.dart` that calculates dispatch progress vectors independently of the main widget build cycle.
 
 ![Antigravity Workspace Screenshot - Decoupled Interpolation Timer](assets/screenshots/antigravity_optimization_proof.png)
-*(Screenshot: Antigravity agent recommending the detached interpolation timer loop to resolve map thread lag)*
+*(Screenshot: Antigravity recommending the detached interpolation timer loop to resolve map thread lag)*
 
 ### 3. Rapid Iteration & Debugging
-When we encountered a persistent `UnimplementedError: updateGroundOverlays()` crash on physical Android devices, we were stuck for hours. We fed the stack trace into Antigravity.
-**Antigravity's active intervention:** Within 15 seconds, the agent scanned our `pubspec.yaml`, identified a stale `dependency_override` forcing `google_maps_flutter_android: 2.14.2`, and automatically executed the terminal commands to strip the override and upgrade the platform interface, completely resolving the ABI mismatch.
+* **Design Requirement:** Resolving a low-level `UnimplementedError: updateGroundOverlays()` ABI mismatch crash on physical Android devices.
+* **Co-Pilot Intervention:** The agent analyzed the Gradle build logs and dependency lockfiles, identified a stale `dependency_override` forcing `google_maps_flutter_android: 2.14.2`, and automatically updated `pubspec.yaml` to upgrade the platform interface—resolving a major blocking crash.
 
 ![Antigravity Workspace Screenshot - Automated Dependency Fix](assets/screenshots/antigravity_debugging_proof.png)
-*(Screenshot: Antigravity analyzing the Gradle and Android build logs to apply the dependency hotfix)*
+*(Screenshot: Antigravity analyzing Gradle logs to identify and apply the dependency fix)*
 
-### 4. Ideation of "Out-of-the-Box" Mechanics
-**Our initial prompt:** *"How do we make the simulation feel more responsive to the judge?"*
-**Antigravity's active intervention:** The agent suggested the **Live Confidence Escalation Meter** (the `ConfidenceGaugCard`) and wrote the exact `TweenAnimationBuilder` bounded to the fusion threshold, even proposing we inject `HapticFeedback.heavyImpact()` exactly when the meter crosses `0.60` to create a visceral "Golden Moment" for the demo.
+### 4. Co-Designing Immersive Interaction Mechanics
+* **Design Requirement:** Creating visual feedback systems to make agentic decisions clear and interactive for observers.
+* **Co-Pilot Intervention:** The agent conceptualized and built the **Live Confidence Escalation Meter** (`ConfidenceGaugCard`) using a `TweenAnimationBuilder` bound to the fusion credibility threshold. To make threshold crossings viscerally engaging, the agent integrated physical device haptics (`HapticFeedback.heavyImpact()`) at the exact transition point ($0.60$).
 
 ![Antigravity Workspace Screenshot - Out-of-the-Box Innovation Ideas](assets/screenshots/antigravity_innovation_proof.png)
-*(Screenshot: Antigravity suggesting the tactical integration of physical device haptics at the 0.60 threshold)*
+*(Screenshot: Antigravity suggesting the integration of physical device haptics at the 0.60 credibility threshold)*
 
-*(Judges: The actual workspace logs, task lists, implementation plans, and prompt histories for these iterations are preserved in the `antigravity_artifacts/` repository folder included in our submission package).*
+*(Note: The complete workspace logs, task lists, implementation plans, and development histories for these iterations are preserved in the `antigravity_artifacts/` repository folder included in the submission package).*
 
 ---
 

@@ -382,7 +382,7 @@ class _ActionTimelineItemState extends ConsumerState<_ActionTimelineItem> {
                               child: CircularProgressIndicator(color: accentPurple, strokeWidth: 2),
                             ),
                             const SizedBox(width: 8),
-                            Text('Querying AI reasoning...', style: inter(11, color: accentPurple, fontStyle: FontStyle.italic)),
+                            Text('Querying AI reasoning...', style: inter(11, color: accentPurple).copyWith(fontStyle: FontStyle.italic)),
                           ],
                         ),
                       ).animate().fadeIn(),

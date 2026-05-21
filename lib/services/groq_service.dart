@@ -18,6 +18,15 @@ class GroqService {
     final key = _apiKeys[_keyIndex];
     _keyIndex = (_keyIndex + 1) % _apiKeys.length;
     if (key.startsWith('GROQ_KEY_')) {
+      try {
+        final numberMatch = RegExp(r'GROQ_KEY_(\d+)').firstMatch(key);
+        if (numberMatch != null) {
+          final numVal = int.parse(numberMatch.group(1)!);
+          if (ApiKeys.fallbackKeys.length >= numVal) {
+            return ApiKeys.fallbackKeys[numVal - 1];
+          }
+        }
+      } catch (_) {}
       return _fallbackKey;
     }
     return key;
@@ -275,7 +284,7 @@ IMPORTANT RULES:
     
     print('Loading fallback asset: $assetPath');
     final jsonStr = await rootBundle.loadString(assetPath);
-    final map = jsonDecode(jsonStr);
+    final Map<String, dynamic> map = jsonDecode(jsonStr);
     
     // Inject the offline mode warning into the agent traces
     if (map['agent_traces'] != null && map['agent_traces']['agent1_signal_fusion'] != null) {
@@ -283,6 +292,70 @@ IMPORTANT RULES:
       steps.insert(0, '[system] WARNING: ⚡ Using cached inference response (offline mode)');
       map['agent_traces']['agent1_signal_fusion']['steps'] = steps;
     }
+
+    // Dynamic Mock Signal Generator for Offline Resilience
+    if (s.contains('dynamic injection') || s.contains('dynamic')) {
+      final typeMatch = RegExp(r'type\s+(\w+)').firstMatch(scenario);
+      final locMatch = RegExp(r'reported at\s+([^.]+)\.').firstMatch(scenario);
+      
+      final type = typeMatch?.group(1) ?? 'FLOOD';
+      final location = locMatch?.group(1) ?? 'G-10';
+      
+      final double dynamicConfidence = 0.75 + ((location.hashCode % 19) / 100.0);
+      final double dynamicSeverity = 6.0 + ((location.hashCode % 26) / 10.0);
+      
+      // Update active_crises inside final_state
+      if (map['final_state'] != null && map['final_state']['active_crises'] != null) {
+        final list = map['final_state']['active_crises'] as List;
+        for (var c in list) {
+          if (c is Map) {
+            c['type'] = type.toLowerCase();
+            c['location'] = location;
+            c['confidence'] = dynamicConfidence;
+            c['severity'] = dynamicSeverity;
+          }
+        }
+      }
+      
+      // Update crises inside agent 2 traces
+      if (map['agent_traces'] != null && map['agent_traces']['agent2_crisis_detection'] != null) {
+        final list = map['agent_traces']['agent2_crisis_detection']['crises'] as List;
+        for (var c in list) {
+          if (c is Map) {
+            c['type'] = type;
+            c['location'] = location;
+            c['confidence'] = dynamicConfidence;
+            c['severity'] = dynamicSeverity;
+          }
+        }
+      }
+      
+      // Update stakeholder messages in agent 3 traces
+      if (map['agent_traces'] != null && map['agent_traces']['agent3_resource_allocation'] != null) {
+        final allocs = map['agent_traces']['agent3_resource_allocation']['allocations'] as List;
+        for (var a in allocs) {
+          if (a is Map && a['stakeholder_messages'] is Map) {
+            final msgs = a['stakeholder_messages'] as Map;
+            msgs['public_english'] = "Emergency alert: Severe $type in $location. Monitor local updates.";
+            msgs['public_urdu'] = "ہنگامی الرٹ: $location میں شدید $type۔ مقامی اپ ڈیٹس کی نگرانی کریں۔";
+            msgs['media_command'] = "Incident ID #ISB-001. Type: $type. Severity: ${dynamicSeverity.toStringAsFixed(1)}/10. Confidence: ${dynamicConfidence.toStringAsFixed(2)}. Emergency response active.";
+          }
+        }
+      }
+      
+      // Update fused signals in agent 1 traces
+      if (map['agent_traces'] != null && map['agent_traces']['agent1_signal_fusion'] != null) {
+        final fused = map['agent_traces']['agent1_signal_fusion']['fused_signals'] as List;
+        for (var f in fused) {
+          if (f is Map) {
+            f['location'] = location;
+            f['event_type'] = type;
+            f['credibility_score'] = dynamicConfidence;
+          }
+        }
+      }
+    }
+    
     return map;
   }
 
